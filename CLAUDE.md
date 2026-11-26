@@ -32,6 +32,7 @@ If they're using this board (Ed's small sound board with a piezo input):
 - You need its board folder, `boards/soniphorm-smart-contact-mic/`. If it isn't in their project folder, copy it in from https://github.com/ed-devane/PlayfulSystems (clone it into a temporary folder first).
 - Read its `BOARD.md` before writing or uploading any code. It gives the board settings, pins and examples, so you don't need to ask for a board ID or run `pio project init`.
 - If they say something like "try mode 3", that means the test sketch. `BOARD.md` explains how to send the command.
+- To control the board from their phone, `tools/phone_qr.py` makes a QR code for their board (see `BOARD.md`).
 - For Wi-Fi, follow "Connecting to Wi-Fi" in `BOARD.md`. They type the password into the serial monitor, never into the chat.
 
 ### Arduino-style boards: use PlatformIO

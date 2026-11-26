@@ -20,6 +20,8 @@
   .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
   label.switch { display: block; padding: .5rem 0; font-size: 1.1rem; }
   input[type=checkbox] { width: 1.3rem; height: 1.3rem; vertical-align: middle; }
+  .limit { margin: 0 0 .8rem; }
+  .limit input { display: block; width: 100%; }
   pre { background: var(--box); padding: .7rem; border-radius: .4rem; overflow-x: auto; }
 </style>
 </head>
@@ -43,8 +45,18 @@
 
 <h2>Movement</h2>
 <label class="switch"><input type="checkbox" id="tilt"> Tilt makes a tone</label>
+
 <label class="switch"><input type="checkbox" id="shake"> Shake plays sound 1</label>
+<div class="limit">
+  <input type="range" id="shakeLimit" min="5" max="40" step="1" value="15" aria-label="Shake needed">
+  needs <span id="shakeNeeded"></span>, strongest lately <span id="shakePeak">0</span>
+</div>
+
 <label class="switch"><input type="checkbox" id="turn"> Quick turn plays sound 2</label>
+<div class="limit">
+  <input type="range" id="turnLimit" min="60" max="600" step="10" value="200" aria-label="Turn speed needed">
+  needs <span id="turnNeeded"></span>, fastest lately <span id="turnPeak">0</span>
+</div>
 <pre id="readout">No movement data yet.</pre>
 <p>Last sent: <span id="sent">nothing</span></p>
 
@@ -54,23 +66,31 @@
 const BROKER = "wss://broker.hivemq.com:8884/mqtt";
 const TOPIC_ROOT = "playfulsystems/";
 
-const SHAKE_LIMIT = 15;     // metres per second squared, without gravity
-const TURN_LIMIT = 300;     // degrees per second
-const GAP_MS = 400;         // shortest time between triggered sounds
+const GAP_MS = 400;         // shortest time between two sounds from one movement
+const PEAK_MS = 2000;       // how long the "lately" readings are held
 const TONE_EVERY_MS = 80;   // how often the tilt tone is sent
 
 // ---- mappings: change these to decide what movement does --------------------
 // accel is metres per second squared; gyro is degrees per second.
 function onMovement(accel, gyro) {
+  trigger("shake", size(accel), "play 1");
+  trigger("turn", size(gyro), "play 2");
+}
+
+// Sends the message when strength passes the slider setting. Shake and turn each
+// have their own timer, so one cannot block the other.
+function trigger(name, strength, message) {
   const now = Date.now();
-  if (now - lastTrigger < GAP_MS) return;
-  if (isOn("shake") && size(accel) > SHAKE_LIMIT) {
-    send("play 1");
-    lastTrigger = now;
-  } else if (isOn("turn") && size(gyro) > TURN_LIMIT) {
-    send("play 2");
-    lastTrigger = now;
+  const peak = peaks[name];
+  if (strength > peak.value || now - peak.at > PEAK_MS) {
+    peak.value = strength;
+    peak.at = now;
+    element(name + "Peak").textContent = strength.toFixed(0);
   }
+  if (!isOn(name) || strength <= Number(element(name + "Limit").value)) return;
+  if (now - lastTrigger[name] < GAP_MS) return;
+  lastTrigger[name] = now;
+  send(message);
 }
 
 // front: tipping the top of the phone up (degrees). side: rolling left or right.
@@ -92,7 +112,9 @@ const isOn = (id) => element(id).checked;
 
 let client = null;
 let topic = "";
-let lastTrigger = 0;
+const lastTrigger = { shake: 0, turn: 0 };
+const peaks = { shake: { value: 0, at: 0 }, turn: { value: 0, at: 0 } };
+let sentCount = 0;
 let lastTone = 0;
 let lastReadout = 0;
 let gravity = null;
@@ -107,7 +129,8 @@ function send(message) {
     return;
   }
   client.publish(topic + "/cmd", message, { qos: 0 });
-  element("sent").textContent = message;
+  sentCount += 1;
+  element("sent").textContent = message + " (message " + sentCount + ")";
 }
 
 function connectBroker(channel) {
@@ -198,6 +221,17 @@ element("connect").addEventListener("click", async () => {
   }
   if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(() => {});
 });
+
+for (const name of ["shake", "turn"]) {
+  const slider = element(name + "Limit");
+  const show = () => element(name + "Needed").textContent = slider.value;
+  try { slider.value = localStorage.getItem(name + "Limit") || slider.value; } catch (e) {}
+  slider.addEventListener("input", () => {
+    show();
+    try { localStorage.setItem(name + "Limit", slider.value); } catch (e) {}
+  });
+  show();
+}
 
 for (const button of document.querySelectorAll("[data-send]")) {
   button.addEventListener("click", () => send(button.dataset.send));

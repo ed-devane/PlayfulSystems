@@ -30,15 +30,13 @@ def find_port():
     sys.exit("More than one board found: " + ", ".join(ports) + ". Add --port <name>.")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("command", nargs="+", help="for example: 1, speaker, check")
-    parser.add_argument("--port", help="serial port, if more than one board")
-    parser.add_argument("--wait", type=float, default=2.0, help="seconds to listen")
-    args = parser.parse_args()
+def talk(command, port=None, wait=2.0, echo=True, until=None):
+    """Sends one command line and returns what the board says in reply.
 
+    Listens for `wait` seconds, or less if the text `until` arrives.
+    """
     board = serial.Serial()
-    board.port = args.port or find_port()
+    board.port = port or find_port()
     board.baudrate = 115200
     board.timeout = 0.1
     board.write_timeout = 2
@@ -47,22 +45,36 @@ def main():
         board.dtr = False
         board.rts = False
 
+    received = b""
     try:
         board.open()
         board.reset_input_buffer()
-        board.write((" ".join(args.command) + "\n").encode())
-        end = time.time() + args.wait
-        received = b""
+        board.write((command + "\n").encode())
+        end = time.time() + wait
         while time.time() < end:
             data = board.read(256)
             received += data
-            sys.stdout.write(data.decode(errors="replace"))
-            sys.stdout.flush()
+            if until and until.encode() in received:
+                time.sleep(0.2)
+                received += board.read(256)
+                break
+            if echo:
+                sys.stdout.write(data.decode(errors="replace"))
+                sys.stdout.flush()
         board.close()
     except serial.SerialException as error:
         sys.exit(f"Serial problem: {error}\nIs the serial monitor still open?")
+    return received.decode(errors="replace")
 
-    if not received:
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("command", nargs="+", help="for example: 1, speaker, check")
+    parser.add_argument("--port", help="serial port, if more than one board")
+    parser.add_argument("--wait", type=float, default=2.0, help="seconds to listen")
+    args = parser.parse_args()
+
+    if not talk(" ".join(args.command), args.port, args.wait):
         sys.exit("No reply. Is the test sketch (00_test_modes) the one uploaded?")
 
 

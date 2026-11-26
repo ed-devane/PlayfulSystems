@@ -42,9 +42,10 @@ inline String channel() {
 }
 
 inline void printLink() {
-  Serial.printf("Phone link: %s   channel %s\n", connected ? "connected" : "connecting",
-                channel().c_str());
+  const char* state = connected ? "connected" : client ? "connecting" : "off (needs mode 5)";
+  Serial.printf("Phone link: %s   channel %s\n", state, channel().c_str());
   Serial.printf("On your phone open: %s?c=%s\n", PAGE, channel().c_str());
+  Serial.printf("QR code for it:     %sqr.html?c=%s\n", PAGE, channel().c_str());
 }
 
 inline void events(void*, esp_event_base_t, int32_t id, void* data) {
@@ -90,7 +91,6 @@ inline void start(Handler handler) {
   }
   esp_mqtt_client_register_event(client, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, events, nullptr);
   esp_mqtt_client_start(client);
-  printLink();
 }
 
 inline void stop() {

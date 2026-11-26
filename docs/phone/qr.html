@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone remote QR code</title>
+<style>
+  /* Always black on white, so cameras can read it and it prints well. */
+  body { font-family: system-ui, sans-serif; background: #fff; color: #111;
+         text-align: center; margin: 0; padding: 16px; }
+  #code svg { width: min(90vw, 26rem); height: auto; }
+  input { font-size: 1.2rem; padding: .5rem; width: 9rem; }
+  button { font-size: 1.2rem; padding: .5rem 1rem; }
+  a { word-break: break-all; }
+</style>
+</head>
+<body>
+<h1>Scan with your phone</h1>
+<form>
+  <label>Channel <input type="text" name="c" id="channel" autocapitalize="off" spellcheck="false"></label>
+  <button>Show code</button>
+</form>
+<div id="code"></div>
+<p><a id="link"></a></p>
+<p id="message"></p>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+const channel = (new URLSearchParams(location.search).get("c") || "").trim().toLowerCase();
+const say = (text) => document.getElementById("message").textContent = text;
+document.getElementById("channel").value = channel;
+
+if (!/^[a-z0-9]{4,20}$/.test(channel)) {
+  say("Type the channel code your board printed.");
+} else {
+  // The phone page is next to this one.
+  const address = new URL("./?c=" + channel, location.href).href;
+  const link = document.getElementById("link");
+  link.href = link.textContent = address;
+  if (typeof qrcode === "undefined") {
+    say("The QR code library did not load. Check the internet and reload.");
+  } else {
+    const qr = qrcode(0, "M");
+    qr.addData(address);
+    qr.make();
+    document.getElementById("code").innerHTML =
+      qr.createSvgTag({ cellSize: 8, margin: 32, scalable: true });
+  }
+}
+</script>
+</body>
+</html>

@@ -46,7 +46,7 @@ The serial monitor and `tools/scm.py` can't both use the board at once. Close th
 | 8 | Level meter in the serial output | Input level and clipping | Piezo |
 | 9 | Records 5 s, plays it back, saves `/recording.wav` | Input, memory, SD writing | Piezo, headphones |
 
-Other commands: `speaker` (amp on/off), `vol 0.5` (0 to 2), `list`, `play 2`, `stop`, `reload` (after changing the SD card), `check` (board report), `status`, `wifi`, `help`. For mode 5, give `tools/scm.py` longer to listen: `--wait 20`.
+Other commands: `speaker` (amp on/off), `vol 0.5` (0 to 2), `list`, `play 2`, `stop`, `reload` (after changing the SD card), `check` (board report), `status`, `wifi`, `phone` (phone link address), `help`. For mode 5, give `tools/scm.py` longer to listen: `--wait 20`.
 
 The speaker amp is on by itself only in modes 4 and 5. In other modes, type `speaker` to hear them through the speaker.
 
@@ -128,8 +128,11 @@ New messages are added in `runMessage()` in `wifi_control.h`.
 **From a phone** (any internet connection, including mobile data):
 
 1. Put the board in mode 5. It prints a **channel code** and an address.
-2. Open https://ed-devane.github.io/PlayfulSystems/phone/ on the phone, type the code, tap **Connect**, and allow movement access if asked.
-3. Try the sound buttons, then switch on tilt, shake or turn.
+2. Show the person a QR code for **their** board. With the board plugged in and the serial monitor closed, run `tools/phone_qr.py` with PlatformIO's Python (the same Python as `tools/scm.py`). It opens a web page with the QR code on the computer.
+3. They scan it with the phone camera, tap **Connect**, and allow movement access if asked.
+4. Try the sound buttons, then switch on tilt, shake or turn. The sliders set how hard a shake or turn has to be.
+
+A board keeps the same code when it moves to another network. Without the board plugged in, `tools/phone_qr.py --code <channel>` makes the same QR code. The page can also be opened by hand at https://ed-devane.github.io/PlayfulSystems/phone/
 
 The route is: phone page, secure WebSocket, a free public MQTT broker (`broker.hivemq.com`), board. The broker has no guarantees, and anyone who knows a channel code can send to that board. Phones only give movement data to `https` pages, which is why the page can't be served by the board itself.
 
@@ -299,7 +302,8 @@ Put your code in `src/main.cpp`. For sound file playback, copy `sound_bank.h` fr
 | `00_test_modes` board check, serial commands | Works on one board (26/11/2026, Windows) |
 | `00_test_modes` modes 1, 2, 3 and 4, speaker amp | Heard working on one board (26/11/2026) |
 | Mode 5: joining a network, web page buttons, UDP messages | Works on one board (26/11/2026) |
-| Phone link and `tone` message | **Not yet tested** |
+| Phone link: sound buttons from a phone | Works on one board (26/11/2026) |
+| Phone movement | Reported working on one phone, except repeated quick turns. Changed since, not yet confirmed |
 | `00_test_modes` modes 6 to 9 | **Not yet tested** |
 | Upload without buttons (after the first upload) | Works (26/11/2026, Windows) |
 | Examples `01` to `06` | Build, **not yet run on a board** |

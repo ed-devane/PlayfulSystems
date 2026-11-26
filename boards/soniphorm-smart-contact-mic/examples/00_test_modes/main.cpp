@@ -269,6 +269,7 @@ void help() {
   Serial.println("  check          board check");
   Serial.println("  wifi           save a Wi-Fi network (\"wifi clear\" forgets it)");
   Serial.println("  status         current mode");
+  Serial.println("  phone          this board's phone link and QR code address");
 }
 
 void status() {
@@ -321,6 +322,8 @@ void runCommand(String line) {
     bank::load();
   } else if (line == "check") {
     boardCheck();
+  } else if (line == "phone") {
+    phone::printLink();
   } else if (line == "status") {
     status();
   } else if (line == "help") {

@@ -207,6 +207,8 @@ Then try things like:
 
 > Help me connect the board to Wi-Fi.
 
+> Make me a QR code so I can control the board from my phone.
+
 > Using mode 5 as a starting point, trigger sounds from my webcam when my hand moves to the left or right.
 
 To play the board from your phone, put it in mode 5 and open the [phone remote](https://ed-devane.github.io/PlayfulSystems/phone/).
