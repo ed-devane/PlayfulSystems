@@ -35,6 +35,9 @@ If they're using this board (Ed's small sound board with a piezo input):
 - To control the board from their phone, `tools/phone_qr.py` makes a QR code for their board (see `BOARD.md`).
 - For Wi-Fi, follow "Connecting to Wi-Fi" in `BOARD.md`. They type the password into the serial monitor, never into the chat.
 
+### Phone camera and movement
+If their idea involves a phone's camera (paper tags, coloured card) or its movement, start from the ready-made pages in `docs/camera/` and `docs/phone/` of https://github.com/ed-devane/PlayfulSystems. Read `docs/camera/README.md` first. Both work without any board.
+
 ### Arduino-style boards: use PlatformIO
 Use the PlatformIO command-line tool (`pio`) to create, build and upload projects. Don't use the Arduino IDE or `arduino-cli`.
 

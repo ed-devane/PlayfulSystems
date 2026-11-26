@@ -142,6 +142,8 @@ The route is: phone page, secure WebSocket, a free public MQTT broker (`broker.h
 
 The page's source is `docs/phone/index.html` in the Playful Systems repository: one file, with the movement-to-message mappings near the top. To make your own version, copy it into a project and publish it at an `https` address (for example GitHub Pages).
 
+**From a phone camera** (paper tags and coloured card): the [camera page](https://ed-devane.github.io/PlayfulSystems/camera/) sends the same messages on the same channel. `tools/phone_qr.py --camera` shows its QR code. For a speaker or exciter, send `speaker` first. How it works and how to change it: `docs/camera/README.md` in the Playful Systems repository.
+
 **From a laptop on the same network:**
 
 - Browser: `http://<address>/` shows a button for each sound.
@@ -310,6 +312,7 @@ Put your code in `src/main.cpp`. For sound file playback, copy `sound_bank.h` fr
 | Phone movement | Reported working on one phone, except repeated quick turns. Changed since, not yet confirmed |
 | SD card: writing, reading back and remounting; 16 and 24 bit WAV loading, 8 bit and float refused | Passed on one board with a 16 GB card (26/11/2026) |
 | `00_test_modes` mode 9: records, saves to the card, file loads again | Works on one board (26/11/2026). Sound **not yet checked by ear** |
+| Camera page: tags and colours triggering sounds and tones | Works with a simulated camera picture (26/11/2026). **Not yet tried with a real camera or phone** |
 | `00_test_modes` modes 6 to 8 | **Not yet tested** |
 | Upload without buttons (after the first upload) | Works (26/11/2026, Windows) |
 | Examples `01` to `06` | Build, **not yet run on a board** |

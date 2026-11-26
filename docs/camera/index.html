@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone camera</title>
+<style>
+  :root { --bg: #fff; --text: #111; --box: #eee; --accent: #1558d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111; --text: #eee; --box: #2a2a2a; --accent: #6ea8ff; }
+  }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text);
+         max-width: 30rem; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 1.6rem; }
+  input[type=text] { font-size: 1.2rem; padding: .6rem; width: 8rem; }
+  button { font-size: 1.2rem; padding: .7rem 1rem; border: 0; border-radius: .4rem;
+           background: var(--box); color: var(--text); }
+  button.main { background: var(--accent); color: var(--bg); }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  canvas { display: block; max-width: 100%; max-height: 70vh; margin: .8rem auto 0;
+           background: var(--box); border-radius: .4rem; touch-action: manipulation; }
+  .chip { border: .35rem solid; }
+  label.switch { display: block; padding: .5rem 0; font-size: 1.1rem; }
+  input[type=checkbox] { width: 1.3rem; height: 1.3rem; vertical-align: middle; }
+  input[type=range] { display: block; width: 100%; }
+  pre { background: var(--box); padding: .7rem; border-radius: .4rem;
+        white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<h1>Phone camera</h1>
+
+<div class="row">
+  <button class="main" id="camera">Start camera</button>
+  <button id="flip">Switch camera</button>
+</div>
+<canvas id="view" width="320" height="180"></canvas>
+<p id="seeing">Camera off</p>
+<p><small>Show it <a href="tags.html">printed tags</a>, or tap a coloured card in the picture to follow that colour. The picture stays on this phone.</small></p>
+
+<div class="row" id="colours"></div>
+<p id="colourNote"></p>
+<label>Colour tolerance <span id="toleranceValue"></span>
+  <input type="range" id="tolerance" min="6" max="40" step="1" value="20"></label>
+
+<h2>Send</h2>
+<div class="row">
+  <label for="channel">Channel</label>
+  <input type="text" id="channel" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <button class="main" id="connect">Connect</button>
+</div>
+<p id="status">Not connected. Type your board's channel code, or make one up.</p>
+<p id="sounds"></p>
+
+<label class="switch"><input type="checkbox" id="tagsPlay"> A tag coming into view plays a sound</label>
+<label class="switch"><input type="checkbox" id="coloursPlay"> A colour coming into view plays a sound</label>
+<label class="switch"><input type="checkbox" id="moveTone"> Moving things makes a tone (silent when still)</label>
+<div class="row"><button id="stop">Stop sound</button></div>
+<p>Last sent to the board: <span id="sent">nothing</span></p>
+
+<h2>Camera data</h2>
+<pre id="data">{"tags":[],"colours":[]}</pre>
+<p><small>Sent to the channel when it changes, for a program on a computer.</small></p>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

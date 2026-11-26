@@ -213,6 +213,8 @@ Then try things like:
 
 To play the board from your phone, put it in mode 5 and open the [phone remote](https://ed-devane.github.io/PlayfulSystems/phone/).
 
+There is also a [phone camera page](https://ed-devane.github.io/PlayfulSystems/camera/) that follows paper tags and coloured card. It works with or without the board: see [`docs/camera/`](docs/camera/README.md).
+
 Details of the board and all the test modes are in [`boards/soniphorm-smart-contact-mic/BOARD.md`](boards/soniphorm-smart-contact-mic/BOARD.md). The first build downloads several gigabytes, so do it before the workshop if you can.
 
 ## Useful commands

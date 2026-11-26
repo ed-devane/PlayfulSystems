@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Printable tags</title>
+<style>
+  /* Always black on white: it is for printing. */
+  body { font-family: system-ui, sans-serif; background: #fff; color: #111; margin: 0; padding: 16px; }
+  input { font-size: 1rem; padding: .4rem; width: 6rem; }
+  button { font-size: 1rem; padding: .4rem .8rem; }
+  #sheet { display: flex; flex-wrap: wrap; gap: 12mm; margin-top: 8mm; }
+  figure { margin: 0; break-inside: avoid; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption { font-size: 10pt; margin-top: 2mm; }
+  @media print { form, p, h1 { display: none; } body { padding: 0; } #sheet { margin: 0; } }
+</style>
+</head>
+<body>
+<h1>Printable tags</h1>
+<form id="form">
+  <label>Tags <input type="text" id="ids" value="0-7"></label>
+  <label>Size in mm <input type="number" id="mm" value="60" min="15" max="180"></label>
+  <button>Show</button>
+  <button type="button" onclick="print()">Print</button>
+</form>
+<p>Numbers from 0 to 399, for example <code>0-7</code> or <code>3, 10, 11</code>. Print on plain matt paper and keep the white edge around each tag when cutting them out. Bigger tags are read from further away.</p>
+<div id="sheet"></div>
+<script type="module">
+import { tagBits, MAX_TAG_ID } from "./vision/tagReader.js";
+
+const element = (id) => document.getElementById(id);
+
+function parse(text) {
+  const ids = new Set();
+  for (const part of text.split(",")) {
+    const found = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if (!found) continue;
+    const from = Number(found[1]);
+    const to = Number(found[2] ?? found[1]);
+    for (let id = Math.min(from, to); id <= Math.min(Math.max(from, to), MAX_TAG_ID) && ids.size < 100; id++) ids.add(id);
+  }
+  return [...ids];
+}
+
+// A tag is 7 cells square: a black border around 5x5 black and white cells.
+function drawTag(id, mm) {
+  const white = tagBits(id)
+    .flatMap((row, y) => row.map((on, x) => (on ? `M${x + 1} ${y + 1}h1v1h-1z` : "")))
+    .join("");
+  const figure = document.createElement("figure");
+  figure.innerHTML =
+    `<svg width="${mm}mm" height="${mm}mm" viewBox="0 0 7 7" shape-rendering="crispEdges">` +
+    `<rect width="7" height="7" fill="#000"/><path d="${white}" fill="#fff"/></svg>` +
+    `<figcaption>tag ${id}</figcaption>`;
+  return figure;
+}
+
+function show() {
+  const mm = Math.min(180, Math.max(15, Number(element("mm").value) || 60));
+  element("sheet").replaceChildren(...parse(element("ids").value).map((id) => drawTag(id, mm)));
+}
+
+element("form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  show();
+});
+show();
+</script>
+</body>
+</html>

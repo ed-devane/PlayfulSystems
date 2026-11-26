@@ -7,7 +7,8 @@ Run it with PlatformIO's Python, like scm.py:
 
 It asks the board for its channel code and opens a web page with the QR code.
 The board needs the test sketch (00_test_modes) and the serial monitor closed.
-Use --code to skip asking the board.
+Use --camera for the camera page instead of the phone remote, and --code to
+skip asking the board.
 """
 
 import argparse
@@ -22,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--code", help="channel code, if you already know it")
     parser.add_argument("--port", help="serial port, if more than one board")
+    parser.add_argument("--camera", action="store_true", help="QR code for the camera page")
     parser.add_argument("--no-open", action="store_true", help="only print the address")
     args = parser.parse_args()
 
@@ -36,7 +38,7 @@ def main():
             sys.exit("The board did not give a channel code. Upload 00_test_modes first.")
         code = found.group(1)
 
-    address = PAGE + code
+    address = PAGE + code + ("&p=camera" if args.camera else "")
     print("Channel:", code)
     print("QR code page:", address)
     if not args.no_open:
