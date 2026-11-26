@@ -224,8 +224,7 @@ void setMode(int chosen) {
   if (chosen == 5) net::start();
   if (chosen == 6) Serial.println("Tap the piezo.");
   if (chosen == 9) Serial.println(recording ? "Recording now..." : "No PSRAM: cannot record");
-  if (chosen == 4 || chosen == 5) setSpeaker(true);
-  else Serial.println("Speaker amp OFF (\"speaker\" turns it on)");
+  Serial.println("Speaker amp OFF (\"speaker\" turns it on)");
 
   // Remembered, so a reset comes back to the same test. Mode 4 is left out so
   // the board never starts up with a live mic into the speaker.
@@ -285,7 +284,6 @@ void runCommand(String line) {
       if (mode == 5) {
         net::stop();
         net::start();
-        setSpeaker(true);
       }
       return;
     case scm::WifiSetup::Used:

@@ -40,7 +40,7 @@ The serial monitor and `tools/scm.py` can't both use the board at once. Close th
 | 2 | 440 Hz sine, piezo not used | Output path on its own | Headphones |
 | 3 | Plays a WAV file from the SD card, looping | SD card and playback | SD card |
 | 4 | Piezo to speaker/exciter | Amplifier | Piezo, speaker or exciter |
-| 5 | Sounds and tones sent over Wi-Fi | Wi-Fi, SD, amplifier | Speaker or exciter |
+| 5 | Sounds and tones sent over Wi-Fi | Wi-Fi and SD | Headphones, speaker or exciter |
 | 6 | Tap the piezo to play a sound | Triggering from the piezo | Piezo, headphones |
 | 7 | Sweep from 50 Hz to 5 kHz | Finding an object's resonances | Speaker or exciter |
 | 8 | Level meter in the serial output | Input level and clipping | Piezo |
@@ -48,16 +48,16 @@ The serial monitor and `tools/scm.py` can't both use the board at once. Close th
 
 Other commands: `speaker` (amp on/off), `vol 0.5` (0 to 2), `list`, `play 2`, `stop`, `reload` (after changing the SD card), `check` (board report), `status`, `wifi`, `phone` (phone link address), `files` (what is on the SD card), `help`. For mode 5, give `tools/scm.py` longer to listen: `--wait 20`.
 
-The speaker amp is on by itself only in modes 4 and 5. In other modes, type `speaker` to hear them through the speaker.
+**The speaker amp is off by default, in every mode.** To hear a speaker or exciter, type `speaker` (or run `tools/scm.py speaker`). The amp goes off again when the mode changes or the board restarts. Headphones don't need it.
 
 The board remembers the last mode after a reset (mode 4 comes back as mode 1, for safety).
 
 ### Sounds on the SD card
 
 - Format the card as FAT32. Put WAV files in the top level (not in folders).
-- 16 or 24 bit PCM, mono or stereo, any sample rate. Stereo is mixed to mono.
+- 16 or 24 bit PCM, mono or stereo, any sample rate. Stereo is mixed to mono. 8 bit and 32 bit float files are skipped (only the serial output says so).
 - The first 8 files in alphabetical order are used. Naming them `01_...`, `02_...` sets the numbers.
-- They are loaded into memory at start-up: about 60 seconds of 48 kHz sound in total.
+- They are loaded into memory at start-up: about 60 seconds of 48 kHz sound in total. Filling it adds about 6 seconds to start-up.
 - A card with no WAV files gets three test sounds written to it.
 - With no card, three built-in sounds are used and the output says "BUILT IN". That tests playback, not the SD card.
 
@@ -129,7 +129,7 @@ New messages are added in `runMessage()` in `wifi_control.h`.
 
 **From a phone** (any internet connection, including mobile data):
 
-1. Put the board in mode 5. It prints a **channel code** and an address.
+1. Put the board in mode 5. It prints a **channel code** and an address. For a speaker or exciter, also send `speaker`.
 2. Show the person a QR code for **their** board. With the board plugged in and the serial monitor closed, run `tools/phone_qr.py` with PlatformIO's Python (the same Python as `tools/scm.py`). It opens a web page with the QR code on the computer.
 3. They scan it with the phone camera, tap **Connect**, and allow movement access if asked.
 4. The page lists the files on the SD card, one button each, and **Reload SD card** reads the card again. Then switch on tilt, shake or turn. The tilt tone sounds only while the phone is moving. The sliders set how much movement is needed. **Disconnect** stops the sound and closes the link.
@@ -220,7 +220,7 @@ Check which end is pin 1 before wiring. Header signals are 3.3 V only: never con
 scm::beginAudio();               // once, in setup()
 scm::readPiezo(mono);            // float mono[scm::BLOCK_SIZE]
 scm::writeAudio(left, right);    // two float arrays of BLOCK_SIZE
-scm::setSpeaker(true);           // amp on
+scm::setSpeaker(true);           // amp on (it is off at start)
 ```
 
 - 48 kHz, blocks of 64 samples (1.33 ms), floats from -1 to 1.
@@ -308,7 +308,9 @@ Put your code in `src/main.cpp`. For sound file playback, copy `sound_bank.h` fr
 | Mode 5: joining a network, web page buttons, UDP messages | Works on one board (26/11/2026) |
 | Phone link: sound buttons from a phone | Works on one board (26/11/2026) |
 | Phone movement | Reported working on one phone, except repeated quick turns. Changed since, not yet confirmed |
-| `00_test_modes` modes 6 to 9 | **Not yet tested** |
+| SD card: writing, reading back and remounting; 16 and 24 bit WAV loading, 8 bit and float refused | Passed on one board with a 16 GB card (26/11/2026) |
+| `00_test_modes` mode 9: records, saves to the card, file loads again | Works on one board (26/11/2026). Sound **not yet checked by ear** |
+| `00_test_modes` modes 6 to 8 | **Not yet tested** |
 | Upload without buttons (after the first upload) | Works (26/11/2026, Windows) |
 | Examples `01` to `06` | Build, **not yet run on a board** |
 | Building on a Mac | Not tested |

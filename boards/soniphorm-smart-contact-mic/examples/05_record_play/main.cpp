@@ -1,6 +1,7 @@
 // Recorder: press MODE to start, press again to stop (or wait 30 s).
 // The recording is saved to the SD card as a WAV file, then played back through
-// the jack and the speaker/exciter. It still records and plays without a card.
+// the jack (set USE_SPEAKER to use the speaker/exciter too). It still records
+// and plays without a card.
 //
 // Audio is held in PSRAM while recording, because SD cards can pause for long
 // enough to cause gaps if written to during recording.
@@ -14,6 +15,7 @@
 constexpr uint32_t MAX_SECONDS = 30;
 constexpr size_t MAX_SAMPLES = MAX_SECONDS * scm::SAMPLE_RATE;
 constexpr float PLAY_MAX = 0.7f;
+constexpr bool USE_SPEAKER = false;  // true: play back on the speaker/exciter too
 
 enum class State { Idle, Recording, Playing };
 
@@ -81,7 +83,7 @@ void finishRecording() {
   Serial.printf("Recorded %.1f s\n", (float)recordedSamples / scm::SAMPLE_RATE);
   saveWav();
   playPosition = 0;
-  scm::setSpeaker(true);
+  scm::setSpeaker(USE_SPEAKER);
   state = State::Playing;
   Serial.println("Playing back...");
 }
