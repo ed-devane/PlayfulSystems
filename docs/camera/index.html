@@ -26,6 +26,7 @@
   input[type=range] { display: block; width: 100%; }
   pre { background: var(--box); padding: .7rem; border-radius: .4rem;
         white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+  summary { font-size: 1.1rem; font-weight: bold; margin-top: 1.6rem; padding: .4rem 0; }
   a { color: var(--accent); }
 </style>
 </head>
@@ -46,23 +47,28 @@
   <input type="range" id="tolerance" min="6" max="40" step="1" value="20"></label>
 
 <h2>Send</h2>
+<p><small>Send what the camera sees to your own web page or program on a computer.</small></p>
 <div class="row">
   <label for="channel">Channel</label>
   <input type="text" id="channel" autocapitalize="off" autocorrect="off" spellcheck="false">
   <button class="main" id="connect">Connect</button>
 </div>
-<p id="status">Not connected. Type your board's channel code, or make one up.</p>
-<p id="sounds"></p>
+<p id="status">Not connected. Make up a channel code that is hard to guess.</p>
 
+<h2>Camera data</h2>
+<pre id="data">{"tags":[],"colours":[]}</pre>
+
+<details>
+<summary>Smart Contact Mic board (optional)</summary>
+<p><small>Connect above using your board's channel code.</small></p>
+<p id="board"></p>
+<p id="sounds"></p>
 <label class="switch"><input type="checkbox" id="tagsPlay"> A tag coming into view plays a sound</label>
 <label class="switch"><input type="checkbox" id="coloursPlay"> A colour coming into view plays a sound</label>
 <label class="switch"><input type="checkbox" id="moveTone"> Moving things makes a tone (silent when still)</label>
 <div class="row"><button id="stop">Stop sound</button></div>
 <p>Last sent to the board: <span id="sent">nothing</span></p>
-
-<h2>Camera data</h2>
-<pre id="data">{"tags":[],"colours":[]}</pre>
-<p><small>Sent to the channel when it changes, for a program on a computer.</small></p>
+</details>
 
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script type="module" src="app.js"></script>

@@ -91,6 +91,32 @@ export function describe(things) {
   return { tags, colours };
 }
 
+// What a listener is given: the lists above, every thing together, and changes.
+export function makeView(things, appeared = [], left = []) {
+  return { ...describe(things), things, appeared, left };
+}
+
+const number = (value, otherwise) => (Number.isFinite(value) ? value : otherwise);
+
+// Turns received JSON back into things. Returns null if it is not camera data.
+export function thingsFrom(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (error) {
+    return null;
+  }
+  if (!Array.isArray(data?.tags) || !Array.isArray(data?.colours)) return null;
+  const read = (list, kind) => list
+    .filter((t) => Number.isInteger(t?.id) && Number.isFinite(t.x) && Number.isFinite(t.y))
+    .map((t) => ({
+      id: t.id, x: t.x, y: t.y, kind, key: kind + " " + t.id,
+      size: number(t.size, 0),
+      ...(kind === "tag" ? { rot: number(t.rot, 0) } : { count: number(t.count, 1) }),
+    }));
+  return [...read(data.colours, "colour"), ...read(data.tags, "tag")];
+}
+
 // Has anything arrived, left or moved enough since the description last sent?
 export function changed(before, after, move) {
   if (!before) return true;

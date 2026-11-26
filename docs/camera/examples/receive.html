@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone camera receiver</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 16px; }
+  canvas { display: block; max-width: 100%; margin-top: 1rem; background: #222; }
+  input, button { font-size: 1.1rem; padding: .5rem; }
+</style>
+</head>
+<body>
+<form id="form"><input id="channel" placeholder="channel code" autocapitalize="off"> <button>Listen</button></form>
+<p id="status">Type the channel the phone camera page is connected to.</p>
+<canvas id="stage" width="640" height="360"></canvas>
+
+<script type="module">
+// A phone's camera in a page on your computer. A circle follows each thing.
+import { receiveCamera } from "../receive.js";
+
+const element = (id) => document.getElementById(id);
+const stage = element("stage").getContext("2d");
+let receiver = null;
+
+function onView(view) {
+  // Replace this with your own idea.
+  stage.clearRect(0, 0, 640, 360);
+  stage.fillStyle = "#6ea8ff";
+  for (const thing of view.things) {
+    stage.beginPath();
+    stage.arc(thing.x * 640, thing.y * 360, 24, 0, 2 * Math.PI);
+    stage.fill();
+    stage.fillText(thing.key, thing.x * 640, thing.y * 360 - 32);
+  }
+}
+
+function listen() {
+  const channel = element("channel").value.trim();
+  if (!channel) return;
+  receiver?.stop();
+  receiver = receiveCamera(channel, { onView, onStatus: (text) => (element("status").textContent = text) });
+}
+
+element("form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  listen();
+});
+element("channel").value = new URLSearchParams(location.search).get("c") || "";
+listen();
+</script>
+</body>
+</html>

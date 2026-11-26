@@ -142,7 +142,7 @@ The route is: phone page, secure WebSocket, a free public MQTT broker (`broker.h
 
 The page's source is `docs/phone/index.html` in the Playful Systems repository: one file, with the movement-to-message mappings near the top. To make your own version, copy it into a project and publish it at an `https` address (for example GitHub Pages).
 
-**From a phone camera** (paper tags and coloured card): the [camera page](https://ed-devane.github.io/PlayfulSystems/camera/) sends the same messages on the same channel. `tools/phone_qr.py --camera` shows its QR code. For a speaker or exciter, send `speaker` first. How it works and how to change it: `docs/camera/README.md` in the Playful Systems repository.
+**From a phone camera** (paper tags and coloured card): the [camera page](https://ed-devane.github.io/PlayfulSystems/camera/) can also send these messages, on the same channel (open its board section). `tools/phone_qr.py --camera` shows its QR code. For a speaker or exciter, send `speaker` first. How it works and how to change it: `docs/camera/README.md` in the Playful Systems repository.
 
 **From a laptop on the same network:**
 

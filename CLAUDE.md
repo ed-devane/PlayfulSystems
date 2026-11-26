@@ -36,7 +36,7 @@ If they're using this board (Ed's small sound board with a piezo input):
 - For Wi-Fi, follow "Connecting to Wi-Fi" in `BOARD.md`. They type the password into the serial monitor, never into the chat.
 
 ### Phone camera and movement
-If their idea involves a phone's camera (paper tags, coloured card) or its movement, start from the ready-made pages in `docs/camera/` and `docs/phone/` of https://github.com/ed-devane/PlayfulSystems. Read `docs/camera/README.md` first. Both work without any board.
+If their idea involves seeing things with a camera (paper tags, coloured card), there is a ready-made sensor in `docs/camera/` of https://github.com/ed-devane/PlayfulSystems that plugs into their own web page or program. It is a tool to use if it helps, not a required starting point. Read `docs/camera/README.md` first. For phone movement, see `docs/phone/`. Neither needs a board.
 
 ### Arduino-style boards: use PlatformIO
 Use the PlatformIO command-line tool (`pio`) to create, build and upload projects. Don't use the Arduino IDE or `arduino-cli`.

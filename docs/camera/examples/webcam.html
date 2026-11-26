@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera in your page</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 16px; }
+  canvas { display: block; max-width: 100%; margin-top: 1rem; background: #222; }
+  input, button { font-size: 1.1rem; padding: .5rem; }
+</style>
+</head>
+<body>
+<button id="start">Start camera</button>
+<p id="note">Show it printed tags, or click a coloured object in the picture.</p>
+<canvas id="picture" width="320" height="180"></canvas>
+<canvas id="stage" width="640" height="360"></canvas>
+
+<script type="module">
+// The camera in your own page: no phone and no network. A circle follows each thing.
+import { createCameraSensor } from "../sensor.js";
+
+const picture = document.getElementById("picture");
+const stage = document.getElementById("stage").getContext("2d");
+
+const sensor = createCameraSensor({
+  onView(view) {
+    // Replace this with your own idea.
+    stage.clearRect(0, 0, 640, 360);
+    stage.fillStyle = "#6ea8ff";
+    for (const thing of view.things) {
+      stage.beginPath();
+      stage.arc(thing.x * 640, thing.y * 360, 24, 0, 2 * Math.PI);
+      stage.fill();
+      stage.fillText(thing.key, thing.x * 640, thing.y * 360 - 32);
+    }
+  },
+});
+
+document.getElementById("start").addEventListener("click", () => sensor.start());
+picture.addEventListener("click", (event) => {
+  const box = picture.getBoundingClientRect();
+  const result = sensor.learnColour((event.clientX - box.left) / box.width, (event.clientY - box.top) / box.height);
+  document.getElementById("note").textContent = result.message;
+});
+(function paint() {
+  sensor.draw(picture.getContext("2d"));
+  requestAnimationFrame(paint);
+})();
+</script>
+</body>
+</html>

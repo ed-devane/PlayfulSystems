@@ -31,3 +31,14 @@ export function toneFor(thing) {
   const level = 1 - thing.y;
   return "tone " + pitch.toFixed(0) + " " + level.toFixed(2);
 }
+
+// ---- your own behaviour: both are empty until you fill them in ---------------
+
+// Called on every camera frame with everything in view, whatever is switched on
+// on the page. Call send("play 2") whenever you decide to. It runs about 30 times
+// a second, so send only when something changes.
+export function everyFrame(things, { send, soundCount }) {}
+
+// Draw over the camera picture, for example to show zones. context is a canvas
+// 2D context; width and height are the picture's size in pixels.
+export function drawGuides(context, width, height) {}

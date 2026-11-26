@@ -1,8 +1,8 @@
 // The link out of the phone: a public MQTT broker, the same one the board and
 // the phone remote use. Needs mqtt.js loaded by the page.
 //
-//   playfulsystems/<channel>/cmd     messages to the board ("play 1")
-//   playfulsystems/<channel>/camera  what the camera sees, as JSON, for a computer
+//   playfulsystems/<channel>/camera  what the camera sees, as JSON
+//   playfulsystems/<channel>/cmd     optional messages to a board ("play 1")
 //   playfulsystems/<channel>/status  from the board: "online" every few seconds
 //   playfulsystems/<channel>/sounds  from the board: the sounds it can play
 
@@ -10,7 +10,7 @@ const BROKER = "wss://broker.hivemq.com:8884/mqtt";
 const TOPIC_ROOT = "playfulsystems/";
 const SILENT_MS = 8000;  // the board reports every 3 s; longer means trouble
 
-export function createLink({ onStatus, onSounds, onConnected }) {
+export function createLink({ onStatus, onBoard, onSounds, onConnected }) {
   let client = null;
   let topic = "";
   let boardOnline = false;
@@ -19,7 +19,7 @@ export function createLink({ onStatus, onSounds, onConnected }) {
   setInterval(() => {
     if (client && boardOnline && Date.now() - lastHeard > SILENT_MS) {
       boardOnline = false;
-      onStatus("Connected, but the board has stopped responding. Waiting for it...");
+      onBoard("The board has stopped responding. Waiting for it...");
     }
   }, 1000);
 
@@ -38,7 +38,8 @@ export function createLink({ onStatus, onSounds, onConnected }) {
     const current = () => link === client;
     link.on("connect", () => {
       if (!current()) return;
-      onStatus("Connected. No board heard yet (fine if you are only sending to a computer).");
+      onStatus("Connected. Sending what the camera sees.");
+      onBoard("No board heard on this channel.");
       link.subscribe([topic + "/status", topic + "/sounds"]);
       onConnected();
     });
@@ -50,13 +51,13 @@ export function createLink({ onStatus, onSounds, onConnected }) {
       }
       if (payload.toString() !== "online") {
         boardOnline = false;
-        onStatus("Connected. Board is offline.");
+        onBoard("The board is offline.");
         return;
       }
       lastHeard = Date.now();
       if (!boardOnline) {
         boardOnline = true;
-        onStatus("Connected. Board is online.");
+        onBoard("The board is online.");
         link.publish(topic + "/cmd", "list");  // ask what it can play
       }
     });
@@ -85,10 +86,14 @@ export function createLink({ onStatus, onSounds, onConnected }) {
     disconnect() {
       const link = client;
       if (!link) return;
-      if (link.connected) link.publish(topic + "/cmd", "stop");
+      if (link.connected) {
+        link.publish(topic + "/camera", JSON.stringify({ tags: [], colours: [] }));
+        link.publish(topic + "/cmd", "stop");
+      }
       client = null;
       link.end(!link.connected);
       onStatus("Disconnected.");
+      onBoard("");
     },
   };
 }
