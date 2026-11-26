@@ -46,7 +46,7 @@ The serial monitor and `tools/scm.py` can't both use the board at once. Close th
 | 8 | Level meter in the serial output | Input level and clipping | Piezo |
 | 9 | Records 5 s, plays it back, saves `/recording.wav` | Input, memory, SD writing | Piezo, headphones |
 
-Other commands: `speaker` (amp on/off), `vol 0.5` (0 to 2), `list`, `play 2`, `stop`, `reload` (after changing the SD card), `check` (board report), `status`, `wifi`, `phone` (phone link address), `help`. For mode 5, give `tools/scm.py` longer to listen: `--wait 20`.
+Other commands: `speaker` (amp on/off), `vol 0.5` (0 to 2), `list`, `play 2`, `stop`, `reload` (after changing the SD card), `check` (board report), `status`, `wifi`, `phone` (phone link address), `files` (what is on the SD card), `help`. For mode 5, give `tools/scm.py` longer to listen: `--wait 20`.
 
 The speaker amp is on by itself only in modes 4 and 5. In other modes, type `speaker` to hear them through the speaker.
 
@@ -133,6 +133,8 @@ New messages are added in `runMessage()` in `wifi_control.h`.
 2. Show the person a QR code for **their** board. With the board plugged in and the serial monitor closed, run `tools/phone_qr.py` with PlatformIO's Python (the same Python as `tools/scm.py`). It opens a web page with the QR code on the computer.
 3. They scan it with the phone camera, tap **Connect**, and allow movement access if asked.
 4. The page lists the files on the SD card, one button each, and **Reload SD card** reads the card again. Then switch on tilt, shake or turn. The tilt tone sounds only while the phone is moving. The sliders set how much movement is needed. **Disconnect** stops the sound and closes the link.
+
+If the page says the board has stopped responding, wait: the board retries by itself. `status` shows the Wi-Fi signal strength and how often the Wi-Fi or phone link has dropped.
 
 A board keeps the same code when it moves to another network. Without the board plugged in, `tools/phone_qr.py --code <channel>` makes the same QR code. The page can also be opened by hand at https://ed-devane.github.io/PlayfulSystems/phone/
 

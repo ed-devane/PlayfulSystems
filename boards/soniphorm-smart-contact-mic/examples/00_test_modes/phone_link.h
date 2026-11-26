@@ -9,6 +9,7 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include <WiFi.h>
 #include <mqtt_client.h>
 #include "scm_wifi.h"
 
@@ -27,12 +28,25 @@ inline String commandTopic;
 inline String statusTopic;
 inline volatile bool connected = false;
 inline volatile bool soundsWanted = false;  // someone needs the sound list
+inline volatile uint32_t drops = 0;         // times the link has been lost
+inline volatile uint32_t lostAt = 0;        // millis() when it was last lost, 0 if not
+inline volatile uint32_t lastOutage = 0;    // how long the last loss lasted, ms
+constexpr uint32_t HEARTBEAT_MS = 3000;     // how often the page hears "online"
 
 // The list of sounds the web page shows as buttons.
 inline void publishSounds(const String& list) {
   if (!client || !connected) return;
   String topic = statusTopic.substring(0, statusTopic.lastIndexOf('/')) + "/sounds";
-  esp_mqtt_client_publish(client, topic.c_str(), list.c_str(), 0, 0, 0);
+  // enqueue never makes the caller wait, even if the network has stalled.
+  esp_mqtt_client_enqueue(client, topic.c_str(), list.c_str(), 0, 0, 0, true);
+}
+
+// Call often. Lets the web page notice quickly if the board stops responding.
+inline void heartbeat() {
+  static uint32_t last = 0;
+  if (!client || !connected || millis() - last < HEARTBEAT_MS) return;
+  last = millis();
+  esp_mqtt_client_enqueue(client, statusTopic.c_str(), "online", 0, 0, 1, true);
 }
 
 // Six random characters, made once and then kept on the board.
@@ -54,6 +68,10 @@ inline void printLink() {
   Serial.printf("Phone link: %s   channel %s\n", state, channel().c_str());
   Serial.printf("On your phone open: %s?c=%s\n", PAGE, channel().c_str());
   Serial.printf("QR code for it:     %sqr.html?c=%s\n", PAGE, channel().c_str());
+  if (drops > 0) {
+    Serial.printf("Link lost %u time(s) since mode 5 started; last outage %.1f s\n",
+                  (unsigned)drops, lastOutage / 1000.0f);
+  }
 }
 
 inline void events(void*, esp_event_base_t, int32_t id, void* data) {
@@ -63,9 +81,20 @@ inline void events(void*, esp_event_base_t, int32_t id, void* data) {
     soundsWanted = true;
     esp_mqtt_client_subscribe(client, commandTopic.c_str(), 0);
     esp_mqtt_client_publish(client, statusTopic.c_str(), "online", 0, 0, 1);
-    Serial.println("Phone link connected");
+    if (lostAt != 0) {
+      lastOutage = millis() - lostAt;
+      lostAt = 0;
+      Serial.printf("Phone link back after %.1f s\n", lastOutage / 1000.0f);
+    } else {
+      Serial.println("Phone link connected");
+    }
   } else if (id == MQTT_EVENT_DISCONNECTED) {
-    if (connected) Serial.println("Phone link lost, retrying");
+    if (connected) {
+      drops = drops + 1;
+      lostAt = max((uint32_t)millis(), (uint32_t)1);
+      Serial.printf("Phone link lost at %lu s (Wi-Fi signal %d dBm), retrying\n",
+                    millis() / 1000, (int)WiFi.RSSI());
+    }
     connected = false;
   } else if (id == MQTT_EVENT_DATA) {
     // Only short, complete messages are accepted.
@@ -92,7 +121,10 @@ inline void start(Handler handler) {
   config.session.last_will.topic = statusTopic.c_str();  // sent if the board vanishes
   config.session.last_will.msg = "offline";
   config.session.last_will.retain = 1;
-  config.session.keepalive = 20;
+  config.session.keepalive = 10;               // notice a dead link sooner
+  config.network.reconnect_timeout_ms = 2000;  // and retry sooner (default 10 s)
+  drops = 0;
+  lostAt = 0;
   client = esp_mqtt_client_init(&config);
   if (client == nullptr) {
     Serial.println("Phone link FAILED to start");

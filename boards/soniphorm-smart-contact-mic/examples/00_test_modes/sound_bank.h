@@ -232,6 +232,43 @@ inline void list() {
   }
 }
 
+// Prints files and folders on the card, a few folders deep.
+inline void printFolder(const String& path, int depth, int& shown) {
+  File folder = SD.open(path);
+  if (!folder) return;
+  while (shown <= 80) {
+    File entry = folder.openNextFile();
+    if (!entry) break;
+    String name = entry.name();
+    bool isFolder = entry.isDirectory();
+    uint32_t size = entry.size();
+    entry.close();
+    if (name.startsWith(".")) continue;
+    if (++shown > 80) break;
+    String full = (path == "/" ? path : path + "/") + name;
+    if (isFolder) {
+      Serial.printf("  %s/\n", full.c_str());
+      if (depth < 3) printFolder(full, depth + 1, shown);
+    } else {
+      Serial.printf("  %s  (%u KB)\n", full.c_str(), (unsigned)((size + 1023) / 1024));
+    }
+    delay(5);  // give the serial port time to send
+  }
+  folder.close();
+}
+
+inline void listCard() {
+  if (!sdMounted) {
+    Serial.println("No SD card (put one in, then type reload)");
+    return;
+  }
+  Serial.println("On the SD card (only WAV files in the top folder are played):");
+  int shown = 0;
+  printFolder("/", 0, shown);
+  if (shown == 0) Serial.println("  (empty)");
+  if (shown > 80) Serial.println("  ... and more");
+}
+
 // (Re)loads all sounds. Call from the main loop only.
 inline void load() {
   if (requests == nullptr) requests = xQueueCreate(8, sizeof(Request));

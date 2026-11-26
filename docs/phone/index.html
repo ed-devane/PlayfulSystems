@@ -44,6 +44,7 @@
   <button data-send="play 2">Sound 2</button>
   <button data-send="play 3">Sound 3</button>
 </div>
+<p><small>Only WAV files in the top folder of the card are listed, up to 8.</small></p>
 <div class="row controls">
   <button data-send="stop">Stop</button>
   <button data-send="reload">Reload SD card</button>
@@ -80,6 +81,7 @@ const GAP_MS = 400;         // shortest time between two sounds from one movemen
 const PEAK_MS = 2000;       // how long the "lately" readings are held
 const TONE_EVERY_MS = 100;  // fastest the tilt tone is sent while moving
 const STILL_MS = 500;       // no movement for this long means silence
+const SILENT_MS = 8000;     // the board reports every 3 s; longer means trouble
 
 // ---- mappings: change these to decide what movement does --------------------
 // accel is metres per second squared; gyro is degrees per second.
@@ -148,6 +150,8 @@ let sentCount = 0;
 let lastTone = 0;
 let reference = null;
 let sounding = false;
+let boardOnline = false;
+let lastHeard = 0;
 let lastReadout = 0;
 let gravity = null;
 let tilt = { front: 0, side: 0 };
@@ -174,6 +178,7 @@ function connectBroker(channel) {
     showStatus("The connection library did not load. Check the internet and reload.");
     return;
   }
+  boardOnline = false;
   const link = mqtt.connect(BROKER, { reconnectPeriod: 2000 });
   client = link;
   // Anything arriving from a connection we have since closed is ignored.
@@ -189,14 +194,33 @@ function connectBroker(channel) {
       showSounds(payload.toString());
       return;
     }
-    const online = payload.toString() === "online";
-    showStatus(online ? "Connected. Board is online." : "Connected. Board is offline.");
-    if (online) link.publish(topic + "/cmd", "list");  // ask what it can play
+    if (payload.toString() !== "online") {
+      boardOnline = false;
+      showStatus("Connected. Board is offline.");
+      return;
+    }
+    lastHeard = Date.now();
+    if (!boardOnline) {
+      boardOnline = true;
+      showStatus("Connected. Board is online.");
+      link.publish(topic + "/cmd", "list");  // ask what it can play
+    }
   });
-  link.on("reconnect", () => { if (current()) showStatus("Reconnecting..."); });
+  link.on("reconnect", () => {
+    if (!current()) return;
+    boardOnline = false;
+    showStatus("Reconnecting...");
+  });
   link.on("error", (error) => {
     if (current()) showStatus("Connection problem: " + error.message);
   });
+}
+
+function checkBoard() {
+  if (client && boardOnline && Date.now() - lastHeard > SILENT_MS) {
+    boardOnline = false;
+    showStatus("Connected, but the board has stopped responding. Waiting for it...");
+  }
 }
 
 function disconnect() {
@@ -220,9 +244,10 @@ function showConnected(connected) {
 // The board's list: first line "card" or "built-in", then one file name per line.
 function showSounds(text) {
   const [source, ...names] = text.split("\n").filter(Boolean).slice(0, 9);
-  element("source").textContent = source === "card"
-    ? "Files loaded from the SD card:"
-    : "No SD card sounds: these are built into the board.";
+  const time = new Date().toLocaleTimeString();
+  element("source").textContent = (source === "card"
+    ? "Files loaded from the SD card"
+    : "No SD card sounds, these are built into the board") + " (updated " + time + "):";
   element("sounds").replaceChildren(...names.map((name, i) => {
     const button = document.createElement("button");
     button.dataset.send = "play " + (i + 1);
@@ -322,6 +347,9 @@ document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-send]");
   if (!button) return;
   if (!client) showStatus("Not connected. Press Connect first.");
+  else if (button.dataset.send === "reload") {
+    element("source").textContent = "Reading the card...";
+  }
   send(button.dataset.send);
 });
 element("tilt").addEventListener("change", () => {
@@ -330,6 +358,7 @@ element("tilt").addEventListener("change", () => {
 });
 document.addEventListener("visibilitychange", () => { if (document.hidden) quiet(); });
 setInterval(checkStill, 100);
+setInterval(checkBoard, 1000);
 
 const fromAddress = new URLSearchParams(location.search).get("c");
 let remembered = null;

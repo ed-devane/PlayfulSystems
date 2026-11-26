@@ -35,6 +35,7 @@ inline WebServer server(80);
 inline WiFiUDP udp;
 inline bool running = false;
 inline volatile bool reloadWanted = false;
+inline volatile uint32_t wifiDrops = 0;
 
 // Read by the audio task.
 inline volatile float toneHz = 440.0f;
@@ -121,7 +122,10 @@ inline void printAddress() {
                   OWN_NETWORK_PASSWORD);
     Serial.println("(No internet on this network, so no phone link.)");
   } else {
-    Serial.printf("Joined network: %s\n", WiFi.SSID().c_str());
+    int signal = WiFi.RSSI();
+    Serial.printf("Joined network: %s   signal %d dBm (%s)\n", WiFi.SSID().c_str(), signal,
+                  signal > -60 ? "good" : signal > -72 ? "fair" : "weak");
+    if (wifiDrops > 0) Serial.printf("Wi-Fi dropped %u time(s)\n", (unsigned)wifiDrops);
   }
   Serial.printf("Web page: http://%s/   or http://%s.local/\n", ip.toString().c_str(),
                 scm::boardName().c_str());
@@ -144,6 +148,18 @@ inline void start() {
     }
     WiFi.setSleep(false);
   }
+  static bool watching = false;
+  if (!watching) {
+    watching = true;
+    WiFi.onEvent(
+        [](arduino_event_id_t, arduino_event_info_t info) {
+          if (!running) return;
+          wifiDrops = wifiDrops + 1;
+          Serial.printf("Wi-Fi dropped at %lu s, reason %d\n", millis() / 1000,
+                        info.wifi_sta_disconnected.reason);
+        },
+        ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  }
   setupRoutes();
   server.begin();
   udp.begin(UDP_PORT);
@@ -155,6 +171,7 @@ inline void start() {
 
 inline void stop() {
   if (!running) return;
+  running = false;  // first, so the deliberate disconnect isn't counted as a drop
   phone::stop();
   silence();
   MDNS.end();
@@ -162,7 +179,6 @@ inline void stop() {
   server.stop();
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
-  running = false;
 }
 
 inline void handle() {
@@ -187,6 +203,7 @@ inline void handle() {
     sentLoad = bank::loads;
     phone::publishSounds(bank::describe());
   }
+  phone::heartbeat();
 }
 
 }  // namespace net

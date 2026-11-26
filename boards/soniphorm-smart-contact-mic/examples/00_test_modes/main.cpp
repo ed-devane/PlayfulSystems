@@ -263,6 +263,7 @@ void help() {
   Serial.println("  speaker        speaker amp on/off");
   Serial.println("  vol 0.5        volume, 0 to 2");
   Serial.println("  list           sounds available");
+  Serial.println("  files          what is on the SD card");
   Serial.println("  play 2         play sound 2 (modes 3, 5 and 6)");
   Serial.println("  stop           stop sounds");
   Serial.println("  reload         read the SD card again");
@@ -318,6 +319,8 @@ void runCommand(String line) {
   } else if (line == "stop") {
     bank::trigger(bank::STOP_ALL);
     Serial.println("Stopped");
+  } else if (line == "files") {
+    bank::listCard();
   } else if (line == "reload") {
     bank::load();
   } else if (line == "check") {
