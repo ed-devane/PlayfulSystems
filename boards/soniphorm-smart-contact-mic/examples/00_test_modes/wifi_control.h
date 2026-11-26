@@ -8,6 +8,8 @@
 //   tone 440 0.5      a tone at 440 Hz, level 0 to 1. Repeat it to keep it going:
 //                     it fades out after 1 second without a new message
 //   stop              silence
+//   reload            read the SD card again
+//   list              send the sound names to the phone page
 //
 //   Web:   http://<address>/  (buttons),  /play?n=1,  /stop
 //   UDP:   port 9000
@@ -32,6 +34,7 @@ constexpr uint32_t TONE_TIMEOUT_MS = 1000;
 inline WebServer server(80);
 inline WiFiUDP udp;
 inline bool running = false;
+inline volatile bool reloadWanted = false;
 
 // Read by the audio task.
 inline volatile float toneHz = 440.0f;
@@ -62,6 +65,10 @@ inline void runMessage(const String& message) {
   float hz, level;
   if (text == "stop") {
     silence();
+  } else if (text == "list") {
+    phone::soundsWanted = true;  // handle() sends it
+  } else if (text == "reload") {
+    reloadWanted = true;  // handle() reads the card again
   } else if (sscanf(text.c_str(), "tone %f %f", &hz, &level) == 2 && isfinite(hz) &&
              isfinite(level)) {
     if (hz > 0.0f) toneHz = constrain(hz, 40.0f, 5000.0f);
@@ -166,6 +173,19 @@ inline void handle() {
     int length = udp.read(message, sizeof(message) - 1);
     message[max(length, 0)] = '\0';
     runMessage(message);
+  }
+
+  if (reloadWanted) {
+    reloadWanted = false;
+    silence();
+    bank::load();
+  }
+  // Tell the phone page what can be played, when asked and after any reload.
+  static uint32_t sentLoad = 0;
+  if (phone::connected && (phone::soundsWanted || sentLoad != bank::loads)) {
+    phone::soundsWanted = false;
+    sentLoad = bank::loads;
+    phone::publishSounds(bank::describe());
   }
 }
 

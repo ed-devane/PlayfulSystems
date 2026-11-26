@@ -18,6 +18,8 @@
            background: var(--box); color: var(--text); }
   button.main { background: var(--accent); color: var(--bg); }
   .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .controls { margin-top: 1rem; }
+  #sounds button { overflow-wrap: anywhere; }
   label.switch { display: block; padding: .5rem 0; font-size: 1.1rem; }
   input[type=checkbox] { width: 1.3rem; height: 1.3rem; vertical-align: middle; }
   .limit { margin: 0 0 .8rem; }
@@ -35,16 +37,24 @@
 </div>
 <p id="status">Not connected. Type the channel code your board printed.</p>
 
-<h2>Test buttons</h2>
-<div class="row">
+<h2>Sounds</h2>
+<p id="source">Connect to see the sounds on your board.</p>
+<div class="row" id="sounds">
   <button data-send="play 1">Sound 1</button>
   <button data-send="play 2">Sound 2</button>
   <button data-send="play 3">Sound 3</button>
+</div>
+<div class="row controls">
   <button data-send="stop">Stop</button>
+  <button data-send="reload">Reload SD card</button>
 </div>
 
 <h2>Movement</h2>
-<label class="switch"><input type="checkbox" id="tilt"> Tilt makes a tone</label>
+<label class="switch"><input type="checkbox" id="tilt"> Tilting makes a tone (silent when still)</label>
+<div class="limit">
+  <input type="range" id="tiltLimit" min="1" max="10" step="1" value="2" aria-label="Tilt change needed">
+  needs a change of <span id="tiltNeeded"></span> degrees
+</div>
 
 <label class="switch"><input type="checkbox" id="shake"> Shake plays sound 1</label>
 <div class="limit">
@@ -68,7 +78,8 @@ const TOPIC_ROOT = "playfulsystems/";
 
 const GAP_MS = 400;         // shortest time between two sounds from one movement
 const PEAK_MS = 2000;       // how long the "lately" readings are held
-const TONE_EVERY_MS = 80;   // how often the tilt tone is sent
+const TONE_EVERY_MS = 100;  // fastest the tilt tone is sent while moving
+const STILL_MS = 500;       // no movement for this long means silence
 
 // ---- mappings: change these to decide what movement does --------------------
 // accel is metres per second squared; gyro is degrees per second.
@@ -94,14 +105,33 @@ function trigger(name, strength, message) {
 }
 
 // front: tipping the top of the phone up (degrees). side: rolling left or right.
+// Nothing is sent unless the tilt has changed by at least the slider amount.
 function onTilt(front, side) {
   if (!isOn("tilt")) return;
+  if (!reference) {
+    reference = { front, side };  // where movement is measured from
+    return;
+  }
+  const change = Math.max(Math.abs(front - reference.front), Math.abs(side - reference.side));
+  if (change < Number(element("tiltLimit").value)) return;
   const now = Date.now();
   if (now - lastTone < TONE_EVERY_MS) return;
+  reference = { front, side };
   lastTone = now;
+  sounding = true;
   const pitch = 220 * Math.pow(4, clamp(front / 90, 0, 1));  // 220 to 880 Hz
   const level = clamp((side + 45) / 90, 0, 1);               // left quiet, right loud
   send("tone " + pitch.toFixed(0) + " " + level.toFixed(2));
+}
+
+// Called regularly: ends the tone once the phone has been still for a moment.
+function checkStill() {
+  if (sounding && Date.now() - lastTone > STILL_MS) quiet();
+}
+
+function quiet() {
+  if (sounding) send("tone 0 0");
+  sounding = false;
 }
 
 // ---- the rest ---------------------------------------------------------------
@@ -116,6 +146,8 @@ const lastTrigger = { shake: 0, turn: 0 };
 const peaks = { shake: { value: 0, at: 0 }, turn: { value: 0, at: 0 } };
 let sentCount = 0;
 let lastTone = 0;
+let reference = null;
+let sounding = false;
 let lastReadout = 0;
 let gravity = null;
 let tilt = { front: 0, side: 0 };
@@ -124,7 +156,8 @@ let movementSeen = false;
 function showStatus(text) { element("status").textContent = text; }
 
 function send(message) {
-  if (!client || !client.connected) {
+  if (!client) return;
+  if (!client.connected) {
     showStatus("Not connected: nothing sent.");
     return;
   }
@@ -141,17 +174,61 @@ function connectBroker(channel) {
     showStatus("The connection library did not load. Check the internet and reload.");
     return;
   }
-  client = mqtt.connect(BROKER, { reconnectPeriod: 2000 });
-  client.on("connect", () => {
+  const link = mqtt.connect(BROKER, { reconnectPeriod: 2000 });
+  client = link;
+  // Anything arriving from a connection we have since closed is ignored.
+  const current = () => link === client;
+  link.on("connect", () => {
+    if (!current()) return;
     showStatus("Connected. Waiting to hear from the board (is it in mode 5?)");
-    client.subscribe(topic + "/status");
+    link.subscribe([topic + "/status", topic + "/sounds"]);
   });
-  client.on("message", (_, payload) => {
+  link.on("message", (from, payload) => {
+    if (!current()) return;
+    if (from === topic + "/sounds") {
+      showSounds(payload.toString());
+      return;
+    }
     const online = payload.toString() === "online";
     showStatus(online ? "Connected. Board is online." : "Connected. Board is offline.");
+    if (online) link.publish(topic + "/cmd", "list");  // ask what it can play
   });
-  client.on("reconnect", () => showStatus("Reconnecting..."));
-  client.on("error", (error) => showStatus("Connection problem: " + error.message));
+  link.on("reconnect", () => { if (current()) showStatus("Reconnecting..."); });
+  link.on("error", (error) => {
+    if (current()) showStatus("Connection problem: " + error.message);
+  });
+}
+
+function disconnect() {
+  const link = client;
+  if (!link) return;
+  if (link.connected) link.publish(topic + "/cmd", "stop");
+  client = null;
+  sounding = false;
+  link.end(!link.connected);
+  if (wakeLock) wakeLock.release().catch(() => {});
+  wakeLock = null;
+  showConnected(false);
+  showStatus("Disconnected.");
+}
+
+function showConnected(connected) {
+  element("connect").textContent = connected ? "Disconnect" : "Connect";
+  element("channel").disabled = connected;
+}
+
+// The board's list: first line "card" or "built-in", then one file name per line.
+function showSounds(text) {
+  const [source, ...names] = text.split("\n").filter(Boolean).slice(0, 9);
+  element("source").textContent = source === "card"
+    ? "Files loaded from the SD card:"
+    : "No SD card sounds: these are built into the board.";
+  element("sounds").replaceChildren(...names.map((name, i) => {
+    const button = document.createElement("button");
+    button.dataset.send = "play " + (i + 1);
+    button.textContent = (i + 1) + "  " + name;
+    return button;
+  }));
 }
 
 function startSensors() {
@@ -191,8 +268,13 @@ function startSensors() {
 }
 
 let sensorsStarted = false;
+let wakeLock = null;
 
 element("connect").addEventListener("click", async () => {
+  if (client) {
+    disconnect();
+    return;
+  }
   const channel = element("channel").value.trim().toLowerCase();
   if (!/^[a-z0-9]{4,20}$/.test(channel)) {
     showStatus("Type the channel code your board printed.");
@@ -205,6 +287,7 @@ element("connect").addEventListener("click", async () => {
     .filter((type) => type && typeof type.requestPermission === "function")
     .map((type) => type.requestPermission());
   connectBroker(channel);
+  showConnected(client !== null);
   try {
     const answers = await Promise.all(requests);
     if (answers.some((answer) => answer !== "granted")) {
@@ -219,10 +302,12 @@ element("connect").addEventListener("click", async () => {
     sensorsStarted = true;
     startSensors();
   }
-  if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(() => {});
+  if (navigator.wakeLock && client) {
+    navigator.wakeLock.request("screen").then((lock) => { wakeLock = lock; }).catch(() => {});
+  }
 });
 
-for (const name of ["shake", "turn"]) {
+for (const name of ["tilt", "shake", "turn"]) {
   const slider = element(name + "Limit");
   const show = () => element(name + "Needed").textContent = slider.value;
   try { slider.value = localStorage.getItem(name + "Limit") || slider.value; } catch (e) {}
@@ -233,13 +318,18 @@ for (const name of ["shake", "turn"]) {
   show();
 }
 
-for (const button of document.querySelectorAll("[data-send]")) {
-  button.addEventListener("click", () => send(button.dataset.send));
-}
-element("tilt").addEventListener("change", () => { if (!isOn("tilt")) send("tone 0 0"); });
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && isOn("tilt")) send("tone 0 0");
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-send]");
+  if (!button) return;
+  if (!client) showStatus("Not connected. Press Connect first.");
+  send(button.dataset.send);
 });
+element("tilt").addEventListener("change", () => {
+  reference = null;
+  quiet();
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) quiet(); });
+setInterval(checkStill, 100);
 
 const fromAddress = new URLSearchParams(location.search).get("c");
 let remembered = null;

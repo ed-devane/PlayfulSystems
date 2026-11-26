@@ -122,6 +122,8 @@ The same text messages work from a web page, UDP or a phone:
 | `play 2` (or `2`) | Plays sound 2 |
 | `tone 440 0.5` | Tone at 440 Hz, level 0 to 1. Fades out after 1 second unless sent again |
 | `stop` | Silence |
+| `reload` | Reads the SD card again |
+| `list` | Sends the sound names to the phone page |
 
 New messages are added in `runMessage()` in `wifi_control.h`.
 
@@ -130,7 +132,7 @@ New messages are added in `runMessage()` in `wifi_control.h`.
 1. Put the board in mode 5. It prints a **channel code** and an address.
 2. Show the person a QR code for **their** board. With the board plugged in and the serial monitor closed, run `tools/phone_qr.py` with PlatformIO's Python (the same Python as `tools/scm.py`). It opens a web page with the QR code on the computer.
 3. They scan it with the phone camera, tap **Connect**, and allow movement access if asked.
-4. Try the sound buttons, then switch on tilt, shake or turn. The sliders set how hard a shake or turn has to be.
+4. The page lists the files on the SD card, one button each, and **Reload SD card** reads the card again. Then switch on tilt, shake or turn. The tilt tone sounds only while the phone is moving. The sliders set how much movement is needed. **Disconnect** stops the sound and closes the link.
 
 A board keeps the same code when it moves to another network. Without the board plugged in, `tools/phone_qr.py --code <channel>` makes the same QR code. The page can also be opened by hand at https://ed-devane.github.io/PlayfulSystems/phone/
 

@@ -26,6 +26,14 @@ inline Handler onMessage = nullptr;
 inline String commandTopic;
 inline String statusTopic;
 inline volatile bool connected = false;
+inline volatile bool soundsWanted = false;  // someone needs the sound list
+
+// The list of sounds the web page shows as buttons.
+inline void publishSounds(const String& list) {
+  if (!client || !connected) return;
+  String topic = statusTopic.substring(0, statusTopic.lastIndexOf('/')) + "/sounds";
+  esp_mqtt_client_publish(client, topic.c_str(), list.c_str(), 0, 0, 0);
+}
 
 // Six random characters, made once and then kept on the board.
 inline String channel() {
@@ -52,6 +60,7 @@ inline void events(void*, esp_event_base_t, int32_t id, void* data) {
   esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)data;
   if (id == MQTT_EVENT_CONNECTED) {
     connected = true;
+    soundsWanted = true;
     esp_mqtt_client_subscribe(client, commandTopic.c_str(), 0);
     esp_mqtt_client_publish(client, statusTopic.c_str(), "online", 0, 0, 1);
     Serial.println("Phone link connected");

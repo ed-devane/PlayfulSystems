@@ -39,6 +39,7 @@ struct Request {
 inline Sound sounds[MAX_SOUNDS];
 inline volatile int soundCount = 0;
 inline volatile bool ready = false;
+inline uint32_t loads = 0;  // goes up each time the sounds are (re)loaded
 inline volatile int activeVoices = 0;
 inline bool sdMounted = false;
 inline bool fromCard = false;
@@ -276,7 +277,15 @@ inline void load() {
     }
   }
   ready = true;
+  loads = loads + 1;
   list();
+}
+
+// "card" or "built-in", then one name per line. Call from the main loop only.
+inline String describe() {
+  String text = fromCard ? "card" : "built-in";
+  for (int i = 0; i < soundCount; i++) text += String("\n") + sounds[i].name;
+  return text;
 }
 
 // number is 0 for the first sound, or STOP_ALL. Safe to call from any task.
