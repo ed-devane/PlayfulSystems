@@ -193,6 +193,26 @@ Press `Ctrl+C` to close it.
 - Try another USB port, and unplug and replug the board.
 - Some cheaper boards (many Nano and ESP32 clones) need a USB driver. The chip is usually printed on the board near the USB socket: **CH340** ([how to install the driver](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers), Mac and Windows) or **CP2102** ([driver](https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers)). Ask Ed if you're not sure.
 
+## 10. The Smart Contact Mic board (optional)
+
+If you're using one of Ed's Smart Contact Mic boards, you've already done the setup in steps 1 to 9. Copy `CLAUDE.md` into your project folder (step 8), start Claude Code, and ask:
+
+> Get the Smart Contact Mic board folder, read BOARD.md, and upload the test sketch.
+
+Then try things like:
+
+> Try mode 1.
+
+> Check the board and tell me if anything fails.
+
+> Help me connect the board to Wi-Fi.
+
+> Using mode 5 as a starting point, trigger sounds from my webcam when my hand moves to the left or right.
+
+To play the board from your phone, put it in mode 5 and open the [phone remote](https://ed-devane.github.io/PlayfulSystems/phone/).
+
+Details of the board and all the test modes are in [`boards/soniphorm-smart-contact-mic/BOARD.md`](boards/soniphorm-smart-contact-mic/BOARD.md). The first build downloads several gigabytes, so do it before the workshop if you can.
+
 ## Useful commands
 
 | Command | What it does |

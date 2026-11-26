@@ -27,6 +27,13 @@ Only then start building, in small steps, with something that works at the end o
 - Keep hardware-specific code (pins, drivers) separate from the behaviour (what it does), so either can change on its own.
 - Give step-by-step instructions for uploading and testing, and for reading the serial monitor.
 
+### Soniphorm Smart Contact Mic board
+If they're using this board (Ed's small sound board with a piezo input):
+- You need its board folder, `boards/soniphorm-smart-contact-mic/`. If it isn't in their project folder, copy it in from https://github.com/ed-devane/PlayfulSystems (clone it into a temporary folder first).
+- Read its `BOARD.md` before writing or uploading any code. It gives the board settings, pins and examples, so you don't need to ask for a board ID or run `pio project init`.
+- If they say something like "try mode 3", that means the test sketch. `BOARD.md` explains how to send the command.
+- For Wi-Fi, follow "Connecting to Wi-Fi" in `BOARD.md`. They type the password into the serial monitor, never into the chat.
+
 ### Arduino-style boards: use PlatformIO
 Use the PlatformIO command-line tool (`pio`) to create, build and upload projects. Don't use the Arduino IDE or `arduino-cli`.
 

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone remote</title>
+<style>
+  :root { --bg: #fff; --text: #111; --box: #eee; --accent: #1558d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111; --text: #eee; --box: #2a2a2a; --accent: #6ea8ff; }
+  }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text);
+         max-width: 30rem; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 1.6rem; }
+  input[type=text] { font-size: 1.2rem; padding: .6rem; width: 8rem; }
+  button { font-size: 1.2rem; padding: .7rem 1rem; border: 0; border-radius: .4rem;
+           background: var(--box); color: var(--text); }
+  button.main { background: var(--accent); color: var(--bg); }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  label.switch { display: block; padding: .5rem 0; font-size: 1.1rem; }
+  input[type=checkbox] { width: 1.3rem; height: 1.3rem; vertical-align: middle; }
+  pre { background: var(--box); padding: .7rem; border-radius: .4rem; overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>Phone remote</h1>
+
+<div class="row">
+  <label for="channel">Channel</label>
+  <input type="text" id="channel" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <button class="main" id="connect">Connect</button>
+</div>
+<p id="status">Not connected. Type the channel code your board printed.</p>
+
+<h2>Test buttons</h2>
+<div class="row">
+  <button data-send="play 1">Sound 1</button>
+  <button data-send="play 2">Sound 2</button>
+  <button data-send="play 3">Sound 3</button>
+  <button data-send="stop">Stop</button>
+</div>
+
+<h2>Movement</h2>
+<label class="switch"><input type="checkbox" id="tilt"> Tilt makes a tone</label>
+<label class="switch"><input type="checkbox" id="shake"> Shake plays sound 1</label>
+<label class="switch"><input type="checkbox" id="turn"> Quick turn plays sound 2</label>
+<pre id="readout">No movement data yet.</pre>
+<p>Last sent: <span id="sent">nothing</span></p>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+// ---- settings: the board uses the same broker and channel layout ------------
+const BROKER = "wss://broker.hivemq.com:8884/mqtt";
+const TOPIC_ROOT = "playfulsystems/";
+
+const SHAKE_LIMIT = 15;     // metres per second squared, without gravity
+const TURN_LIMIT = 300;     // degrees per second
+const GAP_MS = 400;         // shortest time between triggered sounds
+const TONE_EVERY_MS = 80;   // how often the tilt tone is sent
+
+// ---- mappings: change these to decide what movement does --------------------
+// accel is metres per second squared; gyro is degrees per second.
+function onMovement(accel, gyro) {
+  const now = Date.now();
+  if (now - lastTrigger < GAP_MS) return;
+  if (isOn("shake") && size(accel) > SHAKE_LIMIT) {
+    send("play 1");
+    lastTrigger = now;
+  } else if (isOn("turn") && size(gyro) > TURN_LIMIT) {
+    send("play 2");
+    lastTrigger = now;
+  }
+}
+
+// front: tipping the top of the phone up (degrees). side: rolling left or right.
+function onTilt(front, side) {
+  if (!isOn("tilt")) return;
+  const now = Date.now();
+  if (now - lastTone < TONE_EVERY_MS) return;
+  lastTone = now;
+  const pitch = 220 * Math.pow(4, clamp(front / 90, 0, 1));  // 220 to 880 Hz
+  const level = clamp((side + 45) / 90, 0, 1);               // left quiet, right loud
+  send("tone " + pitch.toFixed(0) + " " + level.toFixed(2));
+}
+
+// ---- the rest ---------------------------------------------------------------
+const element = (id) => document.getElementById(id);
+const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
+const size = (v) => Math.hypot(v.x, v.y, v.z);
+const isOn = (id) => element(id).checked;
+
+let client = null;
+let topic = "";
+let lastTrigger = 0;
+let lastTone = 0;
+let lastReadout = 0;
+let gravity = null;
+let tilt = { front: 0, side: 0 };
+let movementSeen = false;
+
+function showStatus(text) { element("status").textContent = text; }
+
+function send(message) {
+  if (!client || !client.connected) {
+    showStatus("Not connected: nothing sent.");
+    return;
+  }
+  client.publish(topic + "/cmd", message, { qos: 0 });
+  element("sent").textContent = message;
+}
+
+function connectBroker(channel) {
+  if (client) client.end(true);
+  topic = TOPIC_ROOT + channel;
+  showStatus("Connecting...");
+  if (typeof mqtt === "undefined") {
+    showStatus("The connection library did not load. Check the internet and reload.");
+    return;
+  }
+  client = mqtt.connect(BROKER, { reconnectPeriod: 2000 });
+  client.on("connect", () => {
+    showStatus("Connected. Waiting to hear from the board (is it in mode 5?)");
+    client.subscribe(topic + "/status");
+  });
+  client.on("message", (_, payload) => {
+    const online = payload.toString() === "online";
+    showStatus(online ? "Connected. Board is online." : "Connected. Board is offline.");
+  });
+  client.on("reconnect", () => showStatus("Reconnecting..."));
+  client.on("error", (error) => showStatus("Connection problem: " + error.message));
+}
+
+function startSensors() {
+  window.addEventListener("devicemotion", (event) => {
+    const raw = event.accelerationIncludingGravity;
+    let accel = event.acceleration;
+    if (!accel || accel.x === null) {
+      if (!raw || raw.x === null) return;
+      // Estimate gravity (the slow part) and remove it.
+      gravity = gravity || { x: raw.x, y: raw.y, z: raw.z };
+      for (const axis of ["x", "y", "z"]) gravity[axis] += 0.1 * (raw[axis] - gravity[axis]);
+      accel = { x: raw.x - gravity.x, y: raw.y - gravity.y, z: raw.z - gravity.z };
+    }
+    const rate = event.rotationRate || {};
+    const gyro = { x: rate.alpha || 0, y: rate.beta || 0, z: rate.gamma || 0 };
+    movementSeen = true;
+    onMovement(accel, gyro);
+
+    if (Date.now() - lastReadout > 150) {
+      lastReadout = Date.now();
+      element("readout").textContent =
+        "accel  " + [accel.x, accel.y, accel.z].map((n) => n.toFixed(1).padStart(7)).join("") +
+        "\ngyro   " + [gyro.x, gyro.y, gyro.z].map((n) => n.toFixed(0).padStart(7)).join("") +
+        "\ntilt    front " + tilt.front.toFixed(0) + "  side " + tilt.side.toFixed(0);
+    }
+  });
+
+  window.addEventListener("deviceorientation", (event) => {
+    if (event.beta === null) return;
+    tilt = { front: event.beta, side: event.gamma };
+    onTilt(tilt.front, tilt.side);
+  });
+
+  setTimeout(() => {
+    if (!movementSeen) element("readout").textContent = "This device is not sending movement data.";
+  }, 3000);
+}
+
+let sensorsStarted = false;
+
+element("connect").addEventListener("click", async () => {
+  const channel = element("channel").value.trim().toLowerCase();
+  if (!/^[a-z0-9]{4,20}$/.test(channel)) {
+    showStatus("Type the channel code your board printed.");
+    return;
+  }
+  try { localStorage.setItem("channel", channel); } catch (e) {}
+
+  // iPhones only allow this straight after a tap, so ask before anything else.
+  const requests = [window.DeviceMotionEvent, window.DeviceOrientationEvent]
+    .filter((type) => type && typeof type.requestPermission === "function")
+    .map((type) => type.requestPermission());
+  connectBroker(channel);
+  try {
+    const answers = await Promise.all(requests);
+    if (answers.some((answer) => answer !== "granted")) {
+      element("readout").textContent = "Movement access was refused. Reload and allow it.";
+      return;
+    }
+  } catch (error) {
+    element("readout").textContent = "Could not get movement access: " + error.message;
+    return;
+  }
+  if (!sensorsStarted) {
+    sensorsStarted = true;
+    startSensors();
+  }
+  if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(() => {});
+});
+
+for (const button of document.querySelectorAll("[data-send]")) {
+  button.addEventListener("click", () => send(button.dataset.send));
+}
+element("tilt").addEventListener("change", () => { if (!isOn("tilt")) send("tone 0 0"); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && isOn("tilt")) send("tone 0 0");
+});
+
+const fromAddress = new URLSearchParams(location.search).get("c");
+let remembered = null;
+try { remembered = localStorage.getItem("channel"); } catch (e) {}
+element("channel").value = fromAddress || remembered || "";
+if (!window.isSecureContext) {
+  element("readout").textContent = "Movement sensors need an https address.";
+}
+</script>
+</body>
+</html>
