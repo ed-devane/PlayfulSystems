@@ -1,0 +1,11 @@
+PLAYFUL SYSTEMS - YOUR KEY (MAC)
+
+1. Replace your-key-here below with the key Ed emailed you. Keep the quote marks.
+2. Save this file on your Desktop.
+3. Each time you open Terminal: copy the three lines below, paste them in, press Enter, then type claude
+
+export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
+export ANTHROPIC_AUTH_TOKEN="your-key-here"
+export ANTHROPIC_API_KEY=""
+
+Don't put this file in your project folder, and don't share it.
