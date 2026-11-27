@@ -84,5 +84,6 @@ Steps 1 to 4 are built. Step 5 is whatever the phone tests show needs polishing.
   - [x] First try (2026-11-27): two handwritten words were read correctly on the phone
   - [x] With headings underlined, every word was read correctly (2026-11-27)
   - [ ] Several clusters with coloured notes, on the projection screen
-- [ ] Test print in the new lengthways layout
+- [x] Test print in the new lengthways layout: works well, and the larger size is better
+  (2026-11-27)
 - [ ] Full run: photo, table, names, draw, print all
