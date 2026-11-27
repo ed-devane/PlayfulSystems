@@ -11,8 +11,8 @@ export const DEFAULT_SETTINGS = {
   fakePrinter: false,
 };
 
-// The published app, used for the QR code.
-export const APP_URL = 'https://ed-devane.github.io/PlayfulSystems/recipe-slips/';
+// The published app, used for the QR code. The ?v= part makes a phone fetch the page afresh.
+export const APP_URL = 'https://ed-devane.github.io/PlayfulSystems/recipe-slips/?v=2';
 
 // Reading the photo.
 export const VISION = {

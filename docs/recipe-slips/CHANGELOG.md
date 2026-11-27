@@ -2,6 +2,8 @@
 
 ## 2026-11-27
 
+- Fixed "cannot read properties of null" after an update: the phone was mixing old and new
+  files. The app now checks every file is current before it starts.
 - Slips now print lengthways down the paper, with much larger lettering.
 - Yellow (unsure) words have a one-tap "Correct" tick.
 - Names, random draw and pairs, with redraw (all or one person), undo and CSV export.

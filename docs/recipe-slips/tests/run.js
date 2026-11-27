@@ -6,6 +6,7 @@ import './slips.test.js';
 import './printer.test.js';
 import './photo.test.js';
 import './draw.test.js';
+import './startup.test.js';
 
 let failed = 0;
 for (const { name, run } of tests) {

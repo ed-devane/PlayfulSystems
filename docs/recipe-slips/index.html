@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Recipe Slips</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
   <nav>
@@ -93,6 +93,31 @@
     </div>
   </main>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module">
+    // Phones keep copies of files. Check every one is current before starting, so an
+    // update never half-loads. Add new files in js/ to this list (a test checks it).
+    const files = `
+      main config log storage dom download settingsView
+      table/model table/csv table/merge table/tableView
+      names/names names/namesView
+      draw/draw draw/drawView
+      slips/layout slips/render
+      printer/protocol printer/connection printer/printSlips printer/printerControls
+      photo/prompt photo/parse photo/openrouter photo/image photo/captureView
+    `.trim().split(/\s+/);
+
+    // With no internet the check fails quietly and the saved copies are used.
+    await Promise.all(
+      files.map((name) => fetch(`js/${name}.js`, { cache: 'no-cache' }).then((r) => r.text()).catch(() => {})),
+    );
+    try {
+      await import('./js/main.js');
+    } catch (e) {
+      const bar = document.getElementById('message');
+      bar.textContent = `The app didn’t start: ${e.message}. Check the internet and reload.`;
+      bar.classList.add('error');
+      bar.hidden = false;
+    }
+  </script>
 </body>
 </html>
