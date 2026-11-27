@@ -71,5 +71,7 @@ Steps 1 and 4 are built.
 
 - [x] Page loads on GitHub Pages in Chrome on Android (2026-11-27)
 - [x] Connect printer and test print work (2026-11-27, so Web Serial to the PeriPage works on the phone)
-- [ ] Photo of handwritten notes reads into a sensible table (after step 4)
+- [ ] Photo of handwritten notes reads into a sensible table
+  - [x] First try (2026-11-27): two handwritten words were read correctly on the phone
+  - [ ] Several clusters with coloured heading notes, on the projection screen
 - [ ] Full run: photo, table, names, draw, print all (after step 5)
