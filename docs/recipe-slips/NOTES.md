@@ -18,6 +18,10 @@ In-room steps: take photo, glance at table, fix misreads, press print.
   - Classic Bluetooth (serial port profile), **not** Bluetooth Low Energy.
   - The page talks to it with **Web Serial**. It must be paired in Android settings first.
   - It prints pictures, so each slip is drawn as a black and white image.
+  - Slips read **lengthways** (turned 90 degrees) so the lettering can be larger. One is
+    about 48 mm by 13 to 15 cm and takes about 12 seconds, so nine take about 2 minutes.
+    Sizes are in `js/config.js` under `SLIP_STYLE`. This replaces the spec's
+    32-characters-per-line upright layout.
   - Protocol bytes as in Centipede's `src/modules/paperTags/tagSheet.js` and FilmScore's
     `helper/peripage.py` (originally from bitrate16/peripage-python).
 - Static site on GitHub Pages: https://ed-devane.github.io/PlayfulSystems/recipe-slips/
@@ -32,7 +36,8 @@ In-room steps: take photo, glance at table, fix misreads, press print.
 
 - Lives in `docs/recipe-slips/` of the PlayfulSystems repo, so Pages serves it.
 - The spec asked for BLE and ESC/POS text. Changed to the PeriPage picture protocol
-  because that's the printer being used. Slips are still 32 characters wide.
+  because that's the printer being used.
+- Participants' names are typed into the app and never put in this public repo.
 - "Fake printer" shows the exact picture that would be printed. Long-press it to save
   it, which is also a fallback: print the saved image from the PeriPage app.
 - The "Partner" line prints only when pairs are on; a group of three lists both others.
@@ -48,6 +53,8 @@ js/main.js            starts the app and switches between screens
 js/log.js             messages and errors shown on screen
 js/storage.js         saving on the phone
 js/table/             the table: data, CSV, on-screen editor
+js/names/             the list of participants
+js/draw/              the random draw, pairs and the draw screen
 js/slips/             slip wording and layout, drawing it as a picture
 js/printer/           talking to the PeriPage
 js/photo/             shrinking the photo, the question for the model, reading its answer
@@ -59,7 +66,7 @@ qr.html               QR code to open the app on a phone
 ## Build order
 
 Photo reading (4) was moved ahead of 2 and 3, because avoiding typing matters most.
-Steps 1 and 4 are built.
+Steps 1 to 4 are built. Step 5 is whatever the phone tests show needs polishing.
 
 1. Page, review table, CSV, autosave (typed input only), plus an early test print
 2. Names, draw, pairs, fake printer preview
@@ -74,4 +81,5 @@ Steps 1 and 4 are built.
 - [ ] Photo of handwritten notes reads into a sensible table
   - [x] First try (2026-11-27): two handwritten words were read correctly on the phone
   - [ ] Several clusters with coloured heading notes, on the projection screen
-- [ ] Full run: photo, table, names, draw, print all (after step 5)
+- [ ] Test print in the new lengthways layout
+- [ ] Full run: photo, table, names, draw, print all

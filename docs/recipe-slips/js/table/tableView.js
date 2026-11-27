@@ -3,7 +3,18 @@
 import { STORAGE_KEYS } from '../config.js';
 import * as storage from '../storage.js';
 import * as log from '../log.js';
-import { cleanTable, emptyTable, newColumn, isUnsure, needsMoreItems, filledItems } from './model.js';
+import { el } from '../dom.js';
+import { saveCsv } from '../download.js';
+import {
+  cleanTable,
+  emptyTable,
+  newColumn,
+  isUnsure,
+  canConfirm,
+  withoutMark,
+  needsMoreItems,
+  filledItems,
+} from './model.js';
 import { tableToCsv, csvToTable } from './csv.js';
 
 let table = emptyTable();
@@ -31,21 +42,30 @@ export function replaceTable(next) {
   changed();
 }
 
-// Small helper for making page elements.
-function el(tag, properties = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), properties);
-  node.append(...children);
-  return node;
+// The "✓" under a yellow word: it was read correctly, so drop the "?".
+function confirmButton(onConfirm) {
+  const button = el('button', { type: 'button', className: 'confirm', textContent: '✓ Correct' });
+  button.addEventListener('click', () => {
+    remember();
+    onConfirm();
+    changed();
+  });
+  return button;
 }
 
 function itemRow(column, index, onEdit) {
   // A textarea rather than an input, so that long phrases wrap and can all be read.
   const input = el('textarea', { value: column.items[index], placeholder: 'word', rows: 1, enterKeyHint: 'next' });
   input.setAttribute('aria-label', 'word');
-  input.classList.toggle('unsure', isUnsure(input.value));
+  const row = el('li');
+  const mark = () => {
+    input.classList.toggle('unsure', isUnsure(input.value));
+    row.classList.toggle('needs-check', canConfirm(input.value));
+  };
+  mark();
   input.addEventListener('input', () => {
     column.items[index] = input.value.replaceAll('\n', ' ');
-    input.classList.toggle('unsure', isUnsure(input.value));
+    mark();
     save();
     onEdit();
   });
@@ -54,13 +74,15 @@ function itemRow(column, index, onEdit) {
     e.preventDefault();
     addItem(column, index + 1);
   });
-  const remove = el('button', { type: 'button', className: 'small', textContent: '✕', title: 'Delete word' });
+  const remove = el('button', { type: 'button', className: 'small remove', textContent: '✕', title: 'Delete word' });
   remove.addEventListener('click', () => {
     remember();
     column.items.splice(index, 1);
     changed();
   });
-  return el('li', {}, input, remove);
+  const confirm = confirmButton(() => (column.items[index] = withoutMark(column.items[index])));
+  row.append(input, remove, confirm);
+  return row;
 }
 
 function addItem(column, at = column.items.length) {
@@ -73,10 +95,15 @@ function addItem(column, at = column.items.length) {
 function columnCard(column, index) {
   const heading = el('input', { value: column.heading, placeholder: 'Heading', className: 'heading' });
   heading.setAttribute('aria-label', 'column heading');
-  heading.classList.toggle('unsure', isUnsure(heading.value));
+  const confirmHeading = confirmButton(() => (column.heading = withoutMark(column.heading)));
+  const markHeading = () => {
+    heading.classList.toggle('unsure', isUnsure(heading.value));
+    confirmHeading.hidden = !canConfirm(heading.value);
+  };
+  markHeading();
   heading.addEventListener('input', () => {
     column.heading = heading.value;
-    heading.classList.toggle('unsure', isUnsure(heading.value));
+    markHeading();
     save();
   });
 
@@ -99,7 +126,7 @@ function columnCard(column, index) {
     changed();
   });
 
-  return el('section', { className: 'column' }, heading, warning, list, add, remove);
+  return el('section', { className: 'column' }, heading, confirmHeading, warning, list, add, remove);
 }
 
 function render() {
@@ -111,13 +138,7 @@ function render() {
 
 function exportCsv() {
   if (!table.columns.length) return log.error('The table is empty, so there’s nothing to export.');
-  const link = el('a', {
-    href: URL.createObjectURL(new Blob([tableToCsv(table)], { type: 'text/csv' })),
-    download: `recipe-table-${new Date().toISOString().slice(0, 10)}.csv`,
-  });
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-  log.info('CSV saved to your downloads.');
+  saveCsv(tableToCsv(table), 'recipe-table');
 }
 
 async function importCsv(file) {

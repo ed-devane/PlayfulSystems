@@ -1,4 +1,10 @@
-// Decides what goes on each line of a slip. No drawing here, so it can be tested.
+// Decides what goes on a slip. No drawing here, so it can be tested.
+//
+// Slips are read lengthways: the paper's width is the slip's height. A slip is a
+// list of blocks that sit side by side (who it's for, then the words), and each
+// block is a list of lines: { text, px }, where px is the size of the lettering.
+
+import { SLIP_STYLE } from '../config.js';
 
 // Splits text into lines no longer than `width`, breaking between words.
 // A word is only cut if it is longer than a whole line.
@@ -30,7 +36,7 @@ export function fieldLines(fields, width) {
   const labels = fields.map((f) => `${f.label.trim() || 'Word'}:`);
   const indent = Math.max(0, ...labels.map((l) => l.length)) + 1;
   return fields.flatMap((field, i) => {
-    const value = field.value.trim() || '-';
+    const value = (field.value ?? '').trim() || '-';
     const room = width - indent;
     const fitsBeside = indent <= width / 2 && value.split(/\s+/).every((w) => w.length <= room);
     if (fitsBeside) {
@@ -41,25 +47,27 @@ export function fieldLines(fields, width) {
   });
 }
 
-// A slip is a list of { text, big }. "big" lines print at double height.
-export function buildSlip({ title, name, fields, partners = [], footer }, width) {
-  const plain = (text) => wrapText(text, width).map((t) => ({ text: t, big: false }));
-  const rule = { text: '-'.repeat(width), big: false };
-  const blank = { text: '', big: false };
-  const partnerLine = partners.length
-    ? plain(`${partners.length > 1 ? 'Partners' : 'Partner'}: ${partners.join(', ')}`)
+export function buildSlip({ title, name, fields, partners = [], footer }) {
+  const { titlePx, namePx, wordPx, nameChars, textChars, wordChars } = SLIP_STYLE;
+  const lines = (text, chars, px) => wrapText(text, chars).map((t) => ({ text: t, px }));
+  const partner = partners.length
+    ? lines(`${partners.length > 1 ? 'Partners' : 'Partner'}: ${partners.join(', ')}`, textChars, titlePx)
     : [];
-  return [
-    ...plain(title),
-    rule,
-    ...wrapText(name.toUpperCase(), width).map((text) => ({ text, big: true })),
-    blank,
-    ...fieldLines(fields, width).map((text) => ({ text, big: false })),
-    blank,
-    ...plain(footer),
-    ...partnerLine,
-    rule,
+  const who = [
+    ...lines(title, textChars, titlePx),
+    ...lines(name.toUpperCase(), nameChars, namePx),
+    ...partner,
+    { text: '', px: titlePx / 2 },
+    ...lines(footer, textChars, titlePx),
   ];
+  const words = fieldLines(fields, wordChars).map((text) => ({ text, px: wordPx }));
+  return [who, words].filter((block) => block.length);
+}
+
+// How much a block must shrink (1 = not at all) to fit across the paper.
+export function fitScale(block, roomDots) {
+  const needed = block.reduce((sum, line) => sum + line.px * SLIP_STYLE.lineSpacing, 0);
+  return Math.min(1, roomDots / needed);
 }
 
 export const SAMPLE_SLIP = {

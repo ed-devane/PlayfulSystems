@@ -1,21 +1,15 @@
 // The settings screen, including connecting the printer and the test print.
 
-import { DEFAULT_SETTINGS, CHARS_PER_LINE_LIMITS, STORAGE_KEYS } from './config.js';
+import { DEFAULT_SETTINGS, STORAGE_KEYS } from './config.js';
 import * as storage from './storage.js';
 import * as log from './log.js';
 import { buildSlip, SAMPLE_SLIP } from './slips/layout.js';
-import * as printer from './printer/connection.js';
 import { printSlips } from './printer/printSlips.js';
+import { showPrinterStatus } from './printer/printerControls.js';
 
 const settings = { ...DEFAULT_SETTINGS, ...storage.load(STORAGE_KEYS.settings, {}) };
 
 export const getSettings = () => settings;
-
-function clampWidth(value) {
-  const { min, max } = CHARS_PER_LINE_LIMITS;
-  const number = Math.round(Number(value)) || DEFAULT_SETTINGS.charsPerLine;
-  return Math.min(max, Math.max(min, number));
-}
 
 // Connects a box on screen to one setting.
 function bind(id, key) {
@@ -28,7 +22,6 @@ function bind(id, key) {
   display();
   const store = () => {
     if (isTick) settings[key] = input.checked;
-    else if (key === 'charsPerLine') settings[key] = clampWidth(input.value);
     else if (key === 'apiKey') settings[key] = input.value.trim();
     else if (key === 'model') settings[key] = input.value.trim() || DEFAULT_SETTINGS.model;
     else settings[key] = input.value;
@@ -65,40 +58,15 @@ export function startSettingsView() {
   bind('item-colour', 'itemColour');
   bind('slip-title', 'slipTitle');
   bind('slip-footer', 'slipFooter');
-  bind('chars-per-line', 'charsPerLine');
   bind('fake-printer', 'fakePrinter');
 
-  const status = document.getElementById('printer-status');
-  const showStatus = () => {
-    status.textContent = printer.isConnected() ? 'Printer connected' : 'Printer not connected';
-  };
-
-  document.getElementById('connect').addEventListener('click', async () => {
+  document.getElementById('test-print').addEventListener('click', async () => {
     try {
-      log.info('Choose the PeriPage in the list…');
-      if (await printer.connect()) log.info('Printer connected.');
-      else log.info('No printer chosen. If it isn’t listed, pair it in the phone’s Bluetooth settings.');
+      const slip = buildSlip({ ...SAMPLE_SLIP, title: settings.slipTitle, footer: settings.slipFooter });
+      await printSlips([slip], settings, { preview: document.getElementById('preview') });
     } catch (e) {
       log.error(e.message, e.cause ?? e);
     }
-    showStatus();
+    showPrinterStatus();
   });
-
-  document.getElementById('test-print').addEventListener('click', async (event) => {
-    const button = event.currentTarget;
-    button.disabled = true;
-    try {
-      const slip = buildSlip(
-        { ...SAMPLE_SLIP, title: settings.slipTitle, footer: settings.slipFooter },
-        settings.charsPerLine,
-      );
-      await printSlips([slip], settings);
-    } catch (e) {
-      log.error(e.message, e.cause ?? e);
-    }
-    button.disabled = false;
-    showStatus();
-  });
-
-  showStatus();
 }

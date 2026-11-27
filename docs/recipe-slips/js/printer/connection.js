@@ -25,7 +25,7 @@ async function send(steps, onStep = () => {}) {
   }
 }
 
-export async function disconnect() {
+async function disconnect() {
   const old = port;
   port = null;
   await old?.close().catch(() => {}); // it may already be gone

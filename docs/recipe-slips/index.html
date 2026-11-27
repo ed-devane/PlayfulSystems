@@ -9,6 +9,8 @@
 <body>
   <nav>
     <button type="button" data-screen="table">Table</button>
+    <button type="button" data-screen="names">Names</button>
+    <button type="button" data-screen="draw">Draw</button>
     <button type="button" data-screen="settings">Settings</button>
   </nav>
 
@@ -35,6 +37,35 @@
       </div>
     </div>
 
+    <div class="screen" id="screen-names" hidden>
+      <label>Who’s taking part? One name per line.
+        <textarea id="names" rows="12" autocapitalize="words" spellcheck="false"></textarea>
+      </label>
+      <p id="names-count"></p>
+      <p>Names are saved on this phone only.</p>
+    </div>
+
+    <div class="screen" id="screen-draw" hidden>
+      <label class="tick"><input type="checkbox" id="pairs"> Make pairs for the walk-and-pitch</label>
+      <div id="draw-warnings"></div>
+      <div class="actions">
+        <button type="button" id="draw-all" class="main big">Draw</button>
+      </div>
+      <div id="draw-results" hidden>
+        <div class="scroll"><table id="draw-table"></table></div>
+        <p class="printer-status"></p>
+        <div class="actions">
+          <button type="button" class="connect">Connect printer</button>
+          <button type="button" id="print-all" class="main print-button">Print all</button>
+          <button type="button" id="stop-printing" hidden>Stop printing</button>
+          <button type="button" id="preview-all">Show slips on screen</button>
+          <button type="button" id="draw-undo">Undo</button>
+          <button type="button" id="export-draw">Export CSV</button>
+        </div>
+        <div id="draw-preview" class="preview"></div>
+      </div>
+    </div>
+
     <div class="screen" id="screen-settings" hidden>
       <h2>Photo reading</h2>
       <label>OpenRouter key <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-or-…"></label>
@@ -44,19 +75,17 @@
       <label>Word post-it colour <input id="item-colour"></label>
 
       <h2>Printer</h2>
-      <p id="printer-status"></p>
+      <p class="printer-status"></p>
       <div class="actions">
-        <button type="button" id="connect" class="main">Connect printer</button>
-        <button type="button" id="test-print" class="main">Test print</button>
+        <button type="button" class="connect main">Connect printer</button>
+        <button type="button" id="test-print" class="main print-button">Test print</button>
       </div>
       <label class="tick"><input type="checkbox" id="fake-printer"> Fake printer (show slips on screen)</label>
-      <div id="preview"></div>
+      <div id="preview" class="preview"></div>
 
       <h2>Slip</h2>
       <label>Title <input id="slip-title"></label>
       <label>Footer <textarea id="slip-footer" rows="3"></textarea></label>
-      <label>Characters per line <input id="chars-per-line" type="number" inputmode="numeric" min="24" max="48"></label>
-
       <details>
         <summary>Log</summary>
         <pre id="log"></pre>

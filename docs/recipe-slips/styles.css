@@ -83,11 +83,14 @@ input:not([type="checkbox"]), textarea {
 .column li { display: flex; gap: 4px; }
 .column li textarea { flex: 1; min-width: 0; resize: none; field-sizing: content; padding: 10px 6px; }
 /* The delete button appears on the word you've tapped, leaving room to read the others. */
-.column li:not(:focus-within) button { display: none; }
+.column li:not(:focus-within) .remove { display: none; }
+/* A yellow word gets a full-width tick underneath instead. */
+.column li.needs-check { flex-direction: column; }
+.column li.needs-check .remove, .column li:not(.needs-check) .confirm { display: none; }
+button.confirm { background: #0a6b22; border-color: #0a6b22; color: #fff; }
 input.heading { font-weight: 700; border-width: 0 0 3px; border-radius: 0; }
 .column .unsure { background: var(--unsure); border: 2px solid var(--ink); }
 
-#take-photo { flex: 1 1 100%; min-height: 72px; font-size: 24px; }
 #thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 #thumbs img { height: 90px; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
 .warning { margin: 0; color: var(--bad); font-weight: 600; font-size: 15px; }
@@ -99,10 +102,22 @@ label input, label textarea { font-weight: 400; }
 label.tick { display: flex; align-items: center; gap: 10px; min-height: 48px; }
 label.tick input { width: 26px; height: 26px; }
 
-#preview img {
+#take-photo, #draw-all { flex: 1 1 100%; min-height: 72px; font-size: 24px; }
+
+/* The draw: scrolls sideways if needed, with the names staying put. */
+.scroll { overflow-x: auto; }
+#draw-table { border-collapse: collapse; width: 100%; }
+#draw-table th, #draw-table td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+#draw-table td { min-width: 100px; }
+#draw-table th:first-child { position: sticky; left: 0; background: var(--paper); border-right: 2px solid var(--ink); }
+.partners { font-weight: 400; font-size: 15px; }
+.row-buttons { display: flex; gap: 4px; margin-top: 6px; }
+.row-buttons button { font-size: 14px; min-height: 40px; }
+
+.preview img {
   display: block;
   width: 100%;
-  max-width: 384px;
+  max-width: 800px;
   margin: 12px auto;
   border: 1px solid var(--line);
   box-shadow: 0 2px 8px #0003;

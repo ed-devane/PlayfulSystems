@@ -1,6 +1,6 @@
 import { test, equal, ok } from './harness.js';
 import { tableToCsv, csvToTable, parseCsv } from '../js/table/csv.js';
-import { cleanTable, isUnsure, needsMoreItems } from '../js/table/model.js';
+import { cleanTable, isUnsure, canConfirm, withoutMark, needsMoreItems } from '../js/table/model.js';
 
 const table = {
   columns: [
@@ -53,6 +53,14 @@ test('CSV: empty or broken files are refused', () => {
 test('Table: a trailing ? marks a word as unsure', () => {
   ok(isUnsure('unease? '));
   ok(!isUnsure('why? because'));
+});
+
+test('Table: confirming a word takes off its ?', () => {
+  equal(withoutMark(' headphones ?? '), 'headphones');
+  equal(withoutMark('why? because'), 'why? because');
+  ok(canConfirm('headphones?'));
+  ok(!canConfirm('headphones'));
+  ok(!canConfirm('?'), 'nothing to confirm');
 });
 
 test('Table: warns below 4 filled words', () => {

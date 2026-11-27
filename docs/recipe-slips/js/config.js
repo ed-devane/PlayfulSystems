@@ -8,11 +8,8 @@ export const DEFAULT_SETTINGS = {
   itemColour: 'green',
   slipTitle: 'PLAYFUL SYSTEMS',
   slipFooter: 'Make something that can be done in an afternoon.',
-  charsPerLine: 32,
   fakePrinter: false,
 };
-
-export const CHARS_PER_LINE_LIMITS = { min: 24, max: 48 };
 
 // The published app, used for the QR code.
 export const APP_URL = 'https://ed-devane.github.io/PlayfulSystems/recipe-slips/';
@@ -32,13 +29,26 @@ export const PHOTO = {
 // A column with fewer words than this gets a warning.
 export const MIN_ITEMS_PER_COLUMN = 4;
 
-// How a slip is drawn.
+// How a slip is drawn. It is read lengthways. Sizes are in printer dots (8 per mm).
 export const SLIP_STYLE = {
-  widthDots: 384, // PeriPage A6 print width
+  widthDots: 384, // PeriPage A6 print width: the height of the slip as you read it
   fontFamily: 'monospace',
   fontWeight: 'bold',
-  lineSpacing: 1.35,
-  paddingDots: 12, // blank space above and below
+  lineSpacing: 1.3,
+
+  // Lettering sizes. A block that doesn't fit across the paper shrinks to fit.
+  namePx: 68,
+  wordPx: 46,
+  titlePx: 30, // title, partner and footer
+
+  // Longest line, in characters, before wrapping.
+  nameChars: 14,
+  textChars: 22,
+  wordChars: 30,
+
+  marginDots: 8, // blank edge along the long sides
+  endDots: 16, // blank space at each end
+  gapDots: 48, // between the two blocks, with a divider line
 };
 
 // PeriPage timings. The printer has a small buffer, so rows are sent slowly.
@@ -54,4 +64,6 @@ export const PRINTER = {
 export const STORAGE_KEYS = {
   table: 'recipeSlips.table',
   settings: 'recipeSlips.settings',
+  names: 'recipeSlips.names',
+  draw: 'recipeSlips.draw',
 };

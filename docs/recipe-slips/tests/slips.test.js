@@ -1,5 +1,7 @@
 import { test, equal, ok } from './harness.js';
-import { wrapText, fieldLines, buildSlip, SAMPLE_SLIP } from '../js/slips/layout.js';
+import { wrapText, fieldLines, buildSlip, fitScale, SAMPLE_SLIP } from '../js/slips/layout.js';
+import { drawSlip, turnForPrinter } from '../js/slips/render.js';
+import { SLIP_STYLE } from '../js/config.js';
 
 test('Wrap: breaks between words at 32 characters', () => {
   equal(wrapText('Make something that can be done in an afternoon.', 32), [
@@ -53,25 +55,51 @@ test('Fields: an empty column prints a dash', () => {
   equal(fieldLines([{ label: 'Feeling', value: '' }], 32), ['Feeling: -']);
 });
 
-test('Slip: no line is wider than the paper', () => {
-  const awkward = {
-    title: 'PLAYFUL SYSTEMS '.repeat(4),
-    name: 'Maximiliana Featherstonehaugh-Worthington',
-    fields: [{ label: 'A very long category heading indeed', value: 'z'.repeat(50) }],
-    partners: ['Johnny', 'Alexandria'],
-    footer: 'word '.repeat(30),
-  };
-  for (const width of [24, 32, 48]) {
-    ok(buildSlip(awkward, width).every((l) => l.text.length <= width), `too wide at ${width}`);
-  }
+const awkward = {
+  title: 'PLAYFUL SYSTEMS '.repeat(4),
+  name: 'Maximiliana Featherstonehaugh-Worthington',
+  fields: Array.from({ length: 9 }, () => ({ label: 'A very long category heading indeed', value: 'z'.repeat(50) })),
+  partners: ['Johnny', 'Alexandria'],
+  footer: 'word '.repeat(30),
+};
+
+test('Slip: no line is longer than its limit', () => {
+  const [who, words] = buildSlip(awkward);
+  ok(who.every((l) => l.text.length <= Math.max(SLIP_STYLE.textChars, SLIP_STYLE.nameChars)));
+  ok(words.every((l) => l.text.length <= SLIP_STYLE.wordChars));
 });
 
-test('Slip: name is big capitals; partner line only when there is a partner', () => {
-  const slip = buildSlip({ ...SAMPLE_SLIP, title: 'T', footer: 'F' }, 32);
-  equal(slip.filter((l) => l.big).map((l) => l.text), ['ANDREA']);
+test('Slip: crowded blocks shrink to fit across the paper; roomy ones keep their size', () => {
+  const room = SLIP_STYLE.widthDots - SLIP_STYLE.marginDots * 2;
+  for (const block of [...buildSlip(awkward), ...buildSlip({ ...SAMPLE_SLIP, title: 'T', footer: 'F' })]) {
+    const height = block.reduce((sum, l) => sum + l.px * SLIP_STYLE.lineSpacing, 0) * fitScale(block, room);
+    ok(height <= room + 0.001, `block is ${height} dots tall`);
+  }
+  equal(fitScale([{ text: 'a', px: 20 }], room), 1);
+});
+
+test('Slip: name is biggest; partner line only when there is a partner', () => {
+  const build = (partners) => buildSlip({ ...SAMPLE_SLIP, partners, title: 'T', footer: 'F' }).flat();
+  const slip = build(['Johnny']);
+  equal(slip.filter((l) => l.px === SLIP_STYLE.namePx).map((l) => l.text), ['ANDREA']);
   ok(slip.some((l) => l.text === 'Partner: Johnny'));
-  const alone = buildSlip({ ...SAMPLE_SLIP, partners: [], title: 'T', footer: 'F' }, 32);
-  ok(!alone.some((l) => l.text.startsWith('Partner')));
-  const three = buildSlip({ ...SAMPLE_SLIP, partners: ['A', 'B'], title: 'T', footer: 'F' }, 32);
-  ok(three.some((l) => l.text === 'Partners: A, B'));
+  ok(!build([]).some((l) => l.text.startsWith('Partner')));
+  ok(build(['A', 'B']).some((l) => l.text === 'Partners: A, B'));
+});
+
+test('Picture: the slip is as tall as the paper, and turned to the printer’s width', () => {
+  const slip = drawSlip(buildSlip({ ...SAMPLE_SLIP, title: 'T', footer: 'F' }));
+  const turned = turnForPrinter(slip);
+  equal([slip.height, turned.width, turned.height], [384, 384, slip.width]);
+  ok(slip.width > slip.height, 'a slip should be longer than it is tall');
+});
+
+test('Picture: turning moves the top left corner to the top right, without mirroring', () => {
+  const slip = Object.assign(document.createElement('canvas'), { width: 10, height: 4 });
+  const c = slip.getContext('2d');
+  c.fillStyle = '#000';
+  c.fillRect(0, 0, 1, 1);
+  const turned = turnForPrinter(slip);
+  const alpha = (x, y) => turned.getContext('2d').getImageData(x, y, 1, 1).data[3];
+  equal([alpha(3, 0), alpha(0, 0), alpha(3, 9)], [255, 0, 0]);
 });
