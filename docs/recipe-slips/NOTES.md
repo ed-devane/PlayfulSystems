@@ -38,6 +38,8 @@ In-room steps: take photo, glance at table, fix misreads, press print.
 - The spec asked for BLE and ESC/POS text. Changed to the PeriPage picture protocol
   because that's the printer being used.
 - Participants' names are typed into the app and never put in this public repo.
+- **In the room: underline each heading note.** The model is told an underlined note is a
+  heading; colour and position are the fallbacks.
 - "Fake printer" shows the exact picture that would be printed. Long-press it to save
   it, which is also a fallback: print the saved image from the PeriPage app.
 - The "Partner" line prints only when pairs are on; a group of three lists both others.
@@ -80,6 +82,7 @@ Steps 1 to 4 are built. Step 5 is whatever the phone tests show needs polishing.
 - [x] Connect printer and test print work (2026-11-27, so Web Serial to the PeriPage works on the phone)
 - [ ] Photo of handwritten notes reads into a sensible table
   - [x] First try (2026-11-27): two handwritten words were read correctly on the phone
-  - [ ] Several clusters with coloured heading notes, on the projection screen
+  - [x] With headings underlined, every word was read correctly (2026-11-27)
+  - [ ] Several clusters with coloured notes, on the projection screen
 - [ ] Test print in the new lengthways layout
 - [ ] Full run: photo, table, names, draw, print all

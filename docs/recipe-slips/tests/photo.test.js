@@ -28,6 +28,12 @@ test('Prompt: blank colours are left out', () => {
   ok(!buildPrompt({ headingColour: ' ', itemColour: '' }).includes('coloured'));
 });
 
+test('Prompt: underlining marks a heading, with or without colours', () => {
+  for (const settings of [{}, { headingColour: 'pink', itemColour: 'green' }]) {
+    ok(buildPrompt(settings).includes('underlined note is a category heading'));
+  }
+});
+
 test('Prompt: a second photo is told the headings already read', () => {
   ok(buildPrompt({ existingHeadings: ['Feeling', ''] }).includes('["Feeling"]'));
   ok(!buildPrompt({}).includes('already read'));

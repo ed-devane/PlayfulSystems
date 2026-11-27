@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- Photo reading now treats an underlined note as a heading.
 - Fixed "cannot read properties of null" after an update: the phone was mixing old and new
   files. The app now checks every file is current before it starts.
 - Slips now print lengthways down the paper, with much larger lettering.
