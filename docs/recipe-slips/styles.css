@@ -1,0 +1,107 @@
+/* Light, high-contrast and large, for reading in a bright studio. */
+:root {
+  --ink: #111;
+  --paper: #fff;
+  --line: #777;
+  --accent: #0b4fd6;
+  --unsure: #ffe14d;
+  --bad: #a30000;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  font: 18px/1.4 system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+main { padding: 12px; max-width: 900px; margin: 0 auto; }
+
+nav {
+  position: sticky;
+  top: 0;
+  display: flex;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ink);
+  z-index: 1;
+}
+nav button { flex: 1; border: 0; border-radius: 0; }
+nav button[aria-current="page"] { background: var(--ink); color: var(--paper); }
+
+button, input, textarea { font: inherit; color: inherit; }
+
+button {
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  font-weight: 600;
+}
+button.main { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.quiet { border-color: var(--line); color: #444; font-weight: 400; }
+button.small { min-width: 40px; padding: 4px; border-color: var(--line); }
+button:disabled { opacity: 0.4; }
+
+input:not([type="checkbox"]), textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+#message {
+  position: sticky;
+  top: 50px;
+  margin: 0;
+  padding: 10px 12px;
+  background: #e5edff;
+  z-index: 1;
+}
+#message.error { background: var(--bad); color: #fff; }
+
+#columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+}
+.column ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.column li { display: flex; gap: 4px; }
+.column li textarea { flex: 1; min-width: 0; resize: none; field-sizing: content; padding: 10px 6px; }
+/* The delete button appears on the word you've tapped, leaving room to read the others. */
+.column li:not(:focus-within) button { display: none; }
+input.heading { font-weight: 700; border-width: 0 0 3px; border-radius: 0; }
+.column textarea.unsure { background: var(--unsure); border: 2px solid var(--ink); }
+.warning { margin: 0; color: var(--bad); font-weight: 600; font-size: 15px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+
+label { display: block; margin: 12px 0; font-weight: 600; }
+label input, label textarea { font-weight: 400; }
+label.tick { display: flex; align-items: center; gap: 10px; min-height: 48px; }
+label.tick input { width: 26px; height: 26px; }
+
+#preview img {
+  display: block;
+  width: 100%;
+  max-width: 384px;
+  margin: 12px auto;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px #0003;
+}
+
+pre { white-space: pre-wrap; font-size: 13px; }

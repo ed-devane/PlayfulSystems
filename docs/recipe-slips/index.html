@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recipe Slips</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav>
+    <button type="button" data-screen="table">Table</button>
+    <button type="button" data-screen="settings">Settings</button>
+  </nav>
+
+  <p id="message" role="status" hidden></p>
+
+  <main>
+    <div class="screen" id="screen-table">
+      <p id="table-empty">No columns yet. Add one, or import a CSV.</p>
+      <div id="columns"></div>
+      <div class="actions">
+        <button type="button" id="add-column" class="main">+ column</button>
+        <button type="button" id="undo">Undo</button>
+        <button type="button" id="export-csv">Export CSV</button>
+        <button type="button" id="import-csv">Import CSV</button>
+        <button type="button" id="clear-table" class="quiet">Clear table</button>
+        <input type="file" id="import-file" accept=".csv,text/csv" hidden>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-settings" hidden>
+      <h2>Printer</h2>
+      <p id="printer-status"></p>
+      <div class="actions">
+        <button type="button" id="connect" class="main">Connect printer</button>
+        <button type="button" id="test-print" class="main">Test print</button>
+      </div>
+      <label class="tick"><input type="checkbox" id="fake-printer"> Fake printer (show slips on screen)</label>
+      <div id="preview"></div>
+
+      <h2>Slip</h2>
+      <label>Title <input id="slip-title"></label>
+      <label>Footer <textarea id="slip-footer" rows="3"></textarea></label>
+      <label>Characters per line <input id="chars-per-line" type="number" inputmode="numeric" min="24" max="48"></label>
+
+      <details>
+        <summary>Log</summary>
+        <pre id="log"></pre>
+      </details>
+    </div>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
