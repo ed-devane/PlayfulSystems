@@ -22,8 +22,11 @@ In-room steps: take photo, glance at table, fix misreads, press print.
     `helper/peripage.py` (originally from bitrate16/peripage-python).
 - Static site on GitHub Pages: https://ed-devane.github.io/PlayfulSystems/recipe-slips/
 - Plain HTML, CSS and JavaScript. No build step, framework, backend or database.
-- Step 4: handwriting is read by a vision model through OpenRouter. The key is typed
-  into the app and stored on the phone only.
+- Handwriting is read by a vision model through OpenRouter (default
+  `anthropic/claude-opus-5.5`, changeable in Settings). The key is typed into the app and
+  stored in the phone's browser only. Use a key with a low spending limit: any page on
+  ed-devane.github.io shares that browser storage.
+- QR code for the phone: https://ed-devane.github.io/PlayfulSystems/recipe-slips/qr.html
 
 ## Decisions
 
@@ -47,11 +50,16 @@ js/storage.js         saving on the phone
 js/table/             the table: data, CSV, on-screen editor
 js/slips/             slip wording and layout, drawing it as a picture
 js/printer/           talking to the PeriPage
+js/photo/             shrinking the photo, the question for the model, reading its answer
 js/settingsView.js    the settings screen
 tests/                the tests themselves
+qr.html               QR code to open the app on a phone
 ```
 
 ## Build order
+
+Photo reading (4) was moved ahead of 2 and 3, because avoiding typing matters most.
+Steps 1 and 4 are built.
 
 1. Page, review table, CSV, autosave (typed input only), plus an early test print
 2. Names, draw, pairs, fake printer preview
@@ -61,7 +69,7 @@ tests/                the tests themselves
 
 ## To check on the phone
 
-- [ ] Page loads on GitHub Pages in Chrome on Android
-- [ ] Connect printer and test print work
+- [x] Page loads on GitHub Pages in Chrome on Android (2026-11-27)
+- [x] Connect printer and test print work (2026-11-27, so Web Serial to the PeriPage works on the phone)
 - [ ] Photo of handwritten notes reads into a sensible table (after step 4)
 - [ ] Full run: photo, table, names, draw, print all (after step 5)

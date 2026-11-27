@@ -24,6 +24,13 @@ function changed() {
   render();
 }
 
+// Swaps in a whole new table (from a photo or a CSV file). Undo brings the old one back.
+export function replaceTable(next) {
+  remember();
+  table = next;
+  changed();
+}
+
 // Small helper for making page elements.
 function el(tag, properties = {}, ...children) {
   const node = Object.assign(document.createElement(tag), properties);
@@ -66,8 +73,10 @@ function addItem(column, at = column.items.length) {
 function columnCard(column, index) {
   const heading = el('input', { value: column.heading, placeholder: 'Heading', className: 'heading' });
   heading.setAttribute('aria-label', 'column heading');
+  heading.classList.toggle('unsure', isUnsure(heading.value));
   heading.addEventListener('input', () => {
     column.heading = heading.value;
+    heading.classList.toggle('unsure', isUnsure(heading.value));
     save();
   });
 
@@ -97,6 +106,7 @@ function render() {
   document.getElementById('columns').replaceChildren(...table.columns.map(columnCard));
   document.getElementById('table-empty').hidden = table.columns.length > 0;
   document.getElementById('undo').disabled = undoStack.length === 0;
+  document.getElementById('add-photo').hidden = table.columns.length === 0;
 }
 
 function exportCsv() {
@@ -113,9 +123,7 @@ function exportCsv() {
 async function importCsv(file) {
   try {
     const imported = csvToTable(await file.text());
-    remember();
-    table = imported;
-    changed();
+    replaceTable(imported);
     log.info(`Imported ${imported.columns.length} columns.`);
   } catch (e) {
     log.error(`Couldn’t import that file: ${e.message}`, e);

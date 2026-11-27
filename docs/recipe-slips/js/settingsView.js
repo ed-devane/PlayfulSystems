@@ -29,6 +29,8 @@ function bind(id, key) {
   input.addEventListener('change', () => {
     if (isTick) settings[key] = input.checked;
     else if (key === 'charsPerLine') settings[key] = clampWidth(input.value);
+    else if (key === 'apiKey') settings[key] = input.value.trim();
+    else if (key === 'model') settings[key] = input.value.trim() || DEFAULT_SETTINGS.model;
     else settings[key] = input.value;
     display();
     storage.save(STORAGE_KEYS.settings, settings);
@@ -36,6 +38,10 @@ function bind(id, key) {
 }
 
 export function startSettingsView() {
+  bind('api-key', 'apiKey');
+  bind('model', 'model');
+  bind('heading-colour', 'headingColour');
+  bind('item-colour', 'itemColour');
   bind('slip-title', 'slipTitle');
   bind('slip-footer', 'slipFooter');
   bind('chars-per-line', 'charsPerLine');

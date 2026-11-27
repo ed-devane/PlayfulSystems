@@ -85,7 +85,11 @@ input:not([type="checkbox"]), textarea {
 /* The delete button appears on the word you've tapped, leaving room to read the others. */
 .column li:not(:focus-within) button { display: none; }
 input.heading { font-weight: 700; border-width: 0 0 3px; border-radius: 0; }
-.column textarea.unsure { background: var(--unsure); border: 2px solid var(--ink); }
+.column .unsure { background: var(--unsure); border: 2px solid var(--ink); }
+
+#take-photo { flex: 1 1 100%; min-height: 72px; font-size: 24px; }
+#thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+#thumbs img { height: 90px; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
 .warning { margin: 0; color: var(--bad); font-weight: 600; font-size: 15px; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }

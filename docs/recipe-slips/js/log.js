@@ -18,6 +18,9 @@ function show(text, isError) {
   bar.hidden = false;
 }
 
+// For progress that changes every second: shown, but not kept in the log.
+export const status = (text) => show(text, false);
+
 export function info(text) {
   console.log('[recipe-slips]', text);
   record(text);

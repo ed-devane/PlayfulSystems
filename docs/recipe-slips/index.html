@@ -16,10 +16,17 @@
 
   <main>
     <div class="screen" id="screen-table">
-      <p id="table-empty">No columns yet. Add one, or import a CSV.</p>
+      <div class="actions">
+        <button type="button" id="take-photo" class="main">Take photo</button>
+        <button type="button" id="add-photo" hidden>+ Add another photo</button>
+        <button type="button" id="read-again" hidden>Read again</button>
+        <input type="file" id="photo-file" accept="image/*" capture="environment" hidden>
+      </div>
+      <div id="thumbs"></div>
+      <p id="table-empty">No words yet. Take a photo, add a column to type, or import a CSV.</p>
       <div id="columns"></div>
       <div class="actions">
-        <button type="button" id="add-column" class="main">+ column</button>
+        <button type="button" id="add-column">+ column</button>
         <button type="button" id="undo">Undo</button>
         <button type="button" id="export-csv">Export CSV</button>
         <button type="button" id="import-csv">Import CSV</button>
@@ -29,6 +36,12 @@
     </div>
 
     <div class="screen" id="screen-settings" hidden>
+      <h2>Photo reading</h2>
+      <label>OpenRouter key <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-or-…"></label>
+      <label>Model <input id="model" autocapitalize="off" spellcheck="false"></label>
+      <label>Heading post-it colour <input id="heading-colour"></label>
+      <label>Word post-it colour <input id="item-colour"></label>
+
       <h2>Printer</h2>
       <p id="printer-status"></p>
       <div class="actions">

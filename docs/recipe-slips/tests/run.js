@@ -4,12 +4,13 @@ import { tests } from './harness.js';
 import './table.test.js';
 import './slips.test.js';
 import './printer.test.js';
+import './photo.test.js';
 
 let failed = 0;
 for (const { name, run } of tests) {
   const item = document.createElement('li');
   try {
-    run();
+    await run();
     item.className = 'pass';
     item.textContent = `pass: ${name}`;
   } catch (e) {
