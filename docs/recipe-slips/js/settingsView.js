@@ -26,19 +26,40 @@ function bind(id, key) {
     else input.value = settings[key];
   };
   display();
-  input.addEventListener('change', () => {
+  const store = () => {
     if (isTick) settings[key] = input.checked;
     else if (key === 'charsPerLine') settings[key] = clampWidth(input.value);
     else if (key === 'apiKey') settings[key] = input.value.trim();
     else if (key === 'model') settings[key] = input.value.trim() || DEFAULT_SETTINGS.model;
     else settings[key] = input.value;
-    display();
     storage.save(STORAGE_KEYS.settings, settings);
+  };
+  input.addEventListener('change', () => {
+    store();
+    display();
   });
+  // The key is saved the moment it's pasted, without needing to tap anywhere else.
+  if (key === 'apiKey') {
+    input.addEventListener('input', () => {
+      store();
+      showKeyStatus();
+    });
+  }
+}
+
+// Says whether a key is saved, without showing it.
+function showKeyStatus() {
+  const line = document.getElementById('key-status');
+  if (!line) return;
+  const key = settings.apiKey;
+  if (!key) line.textContent = 'No key saved yet.';
+  else if (!key.startsWith('sk-or-')) line.textContent = 'Saved, but OpenRouter keys start with “sk-or-”. Check it.';
+  else line.textContent = `Key saved on this device (ends ${key.slice(-4)}).`;
 }
 
 export function startSettingsView() {
   bind('api-key', 'apiKey');
+  showKeyStatus();
   bind('model', 'model');
   bind('heading-colour', 'headingColour');
   bind('item-colour', 'itemColour');

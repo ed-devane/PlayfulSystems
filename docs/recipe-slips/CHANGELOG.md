@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- The OpenRouter key now saves as soon as it's pasted, and Settings says whether one is saved.
 - Photo reading (step 4, built early): take a photo of the post-its and a vision model
   fills the table. A second photo can be added. Key, model and colours are in Settings.
 - QR code page (`qr.html`) for opening the app on a phone.
