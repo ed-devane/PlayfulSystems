@@ -1,0 +1,20 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; font: 16px/1.4 system-ui, sans-serif; color: #1a1a1a; background: #fff; }
+header { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; padding: 0.6rem 0.8rem; }
+h1 { font-size: 1.1rem; margin: 0; }
+#map { flex: 1; min-height: 0; }
+#connection { margin-left: auto; font-size: 0.9rem; }
+#connection.down { color: #b00020; font-weight: bold; }
+input, button { font: inherit; padding: 0.4rem 0.6rem; }
+.notice { padding: 0.6rem 0.8rem; background: #fff3c4; }
+[hidden] { display: none !important; }
+
+/* Your own dot on the walker page */
+.me { background: #4363d8; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 6px #0008; }
+
+/* The list on the map of everyone */
+#people { margin: 0; padding: 0.4rem 0.8rem; list-style: none; max-height: 30%; overflow: auto; }
+#people li { display: flex; gap: 0.5rem; align-items: center; }
+#people .swatch { width: 0.8rem; height: 0.8rem; border-radius: 50%; }
+#people .lost { color: #777; }

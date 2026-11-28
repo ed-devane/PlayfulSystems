@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gate Walk</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/shared/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Gate Walk</h1>
+    <span id="connection" class="down">Connecting…</span>
+  </header>
+  <form id="join" hidden>
+    <header>
+      <label for="name">Your name</label>
+      <input id="name" required autocomplete="off">
+      <button>Join</button>
+    </header>
+  </form>
+  <div id="gps-notice" class="notice" hidden>
+    Real GPS isn't built yet: it's the next step. <a href="?sim=1">Use practice mode</a>.
+  </div>
+  <div id="status" class="notice" hidden></div>
+  <div id="map"></div>
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

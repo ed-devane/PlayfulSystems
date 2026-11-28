@@ -1,0 +1,8 @@
+node_modules/
+logs/
+.pio/
+.vscode/
+.env
+openrouter-key-*.txt
+.DS_Store
+Thumbs.db
